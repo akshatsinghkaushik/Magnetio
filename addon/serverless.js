@@ -9,6 +9,7 @@ import { landingTemplate } from './lib/landingTemplate.js';
 import { logger } from './lib/logger.js';
 import { handleSubtitleProxyRequest } from './lib/subtitleProxy.js';
 import { trackRequest, getStats } from './lib/analytics.js';
+import { runWithClientIp } from './lib/requestContext.js';
 
 const router = express.Router();
 const ROUTER_CACHE_TTL_MS = 1000 * 60 * 5;
@@ -28,6 +29,41 @@ router.get('/configure', (_req, res) => {
 
 router.get('/manifest.json', (_req, res) => {
   res.json(dummyManifest());
+});
+
+// ─── SEO: robots.txt and sitemap ─────────────────────────────────────────────
+
+router.get('/robots.txt', (_req, res) => {
+  res.type('text/plain').send([
+    'User-agent: *',
+    'Allow: /',
+    'Disallow: /proxy/',
+    'Disallow: /swagger',
+    'Disallow: /stats',
+    '',
+    'Sitemap: https://magnetio.peterdsp.dev/sitemap.xml',
+  ].join('\n'));
+});
+
+router.get('/sitemap.xml', (_req, res) => {
+  const now = new Date().toISOString().split('T')[0];
+  res.type('application/xml').send([
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    '  <url>',
+    '    <loc>https://magnetio.peterdsp.dev/</loc>',
+    `    <lastmod>${now}</lastmod>`,
+    '    <changefreq>weekly</changefreq>',
+    '    <priority>1.0</priority>',
+    '  </url>',
+    '  <url>',
+    '    <loc>https://magnetio.peterdsp.dev/configure</loc>',
+    `    <lastmod>${now}</lastmod>`,
+    '    <changefreq>weekly</changefreq>',
+    '    <priority>0.8</priority>',
+    '  </url>',
+    '</urlset>',
+  ].join('\n'));
 });
 
 const subtitleProxyLimiter = rateLimit({
@@ -72,21 +108,25 @@ router.get('/:configuration/configure', (req, res) => {
 });
 
 router.use('/:configuration', async (req, res, next) => {
-  try {
-    const configHash = hashConfiguration(req.params.configuration);
-    const pathAfterConfig = req.path.replace(/^\/[^/]+/, '');
-    const type = pathAfterConfig.match(/^\/(stream|catalog|subtitle|meta)\b/)?.[1] || 'page';
-    trackRequest(type, configHash).catch(() => {});
+  const clientIp = req.ip || req.connection?.remoteAddress;
 
-    const addonRouter = await getConfiguredAddonRouter(
-      req.params.configuration,
-      getPublicBaseUrl(req),
-    );
-    addonRouter(req, res, next);
-  } catch (err) {
-    logger.error(`Addon routing error: ${err.message}`);
-    res.status(500).json({ error: err.message });
-  }
+  runWithClientIp(clientIp, async () => {
+    try {
+      const configHash = hashConfiguration(req.params.configuration);
+      const pathAfterConfig = req.path.replace(/^\/[^/]+/, '');
+      const type = pathAfterConfig.match(/^\/(stream|catalog|subtitle|meta)\b/)?.[1] || 'page';
+      trackRequest(type, configHash).catch(() => {});
+
+      const addonRouter = await getConfiguredAddonRouter(
+        req.params.configuration,
+        getPublicBaseUrl(req),
+      );
+      addonRouter(req, res, next);
+    } catch (err) {
+      logger.error(`Addon routing error: ${err.message}`);
+      res.status(500).json({ error: err.message });
+    }
+  });
 });
 
 export const serverless = router;

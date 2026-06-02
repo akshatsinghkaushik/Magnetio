@@ -135,7 +135,22 @@ export function parseConfiguration(configString) {
       case 'pu':
         config.putioApiKey = value;
         break;
+      case 'tmdb':
+        config.tmdbApiKey = value;
+        break;
+      case 'torznaburl':
+        try { config.torznabUrl = decodeURIComponent(value); }
+        catch { config.torznabUrl = value; }
+        break;
+      case 'torznabkey':
+        try { config.torznabApiKey = decodeURIComponent(value); }
+        catch { config.torznabApiKey = value; }
+        break;
     }
+  }
+
+  if (config.torznabUrl && !config.providers.includes(TorrentProvider.TORZNAB)) {
+    config.providers.push(TorrentProvider.TORZNAB);
   }
 
   return config;
@@ -170,6 +185,11 @@ export function getDefaultConfiguration() {
     prewarmLimit:       3,
     excludeSizes:       [],
     maxSize:            null,
+    // Recommendations (TMDB)
+    tmdbApiKey:         null,
+    // Torznab (Jackett / Prowlarr)
+    torznabUrl:         null,
+    torznabApiKey:      null,
     // Debrid keys (all null by default)
     realDebridApiKey:   null,
     premiumizeApiKey:   null,

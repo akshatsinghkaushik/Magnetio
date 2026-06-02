@@ -58,6 +58,9 @@ export function landingTemplate(manifest, initialConfig = {}) {
     subtitleLanguages: initialConfig.subtitleLanguages ?? ['en'],
     prewarmDebrid: initialConfig.prewarmDebrid ?? true,
     prewarmLimit: initialConfig.prewarmLimit ?? 3,
+    tmdbApiKey: initialConfig.tmdbApiKey ?? '',
+    torznabUrl: initialConfig.torznabUrl ?? '',
+    torznabApiKey: initialConfig.torznabApiKey ?? '',
     realDebridApiKey: initialConfig.realDebridApiKey ?? '',
     premiumizeApiKey: initialConfig.premiumizeApiKey ?? '',
     allDebridApiKey: initialConfig.allDebridApiKey ?? '',
@@ -73,169 +76,508 @@ export function landingTemplate(manifest, initialConfig = {}) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${escapeHtml(manifest.name)} Configure</title>
+  <title>${escapeHtml(manifest.name)} - Self-Hosted Stremio Addon with 22+ Providers and Debrid Support</title>
+  <meta name="description" content="Magnetio is a free, open-source, self-hosted Stremio addon with 22+ torrent providers, 8 debrid services, Torznab/Jackett/Prowlarr support, TMDB recommendations, and subtitle sync. Stream movies, series, and anime instantly." />
+  <meta name="keywords" content="Magnetio, Stremio addon, self-hosted, torrent, debrid, Real-Debrid, Premiumize, AllDebrid, TorBox, Jackett, Prowlarr, Torznab, streaming, movies, series, anime, open source, TMDB" />
+  <meta name="author" content="peterdsp" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://magnetio.peterdsp.dev/" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Magnetio - Self-Hosted Stremio Addon" />
+  <meta property="og:description" content="Stream anything with 22+ providers, 8 debrid services, Torznab support, and TMDB recommendations. Fully self-hosted, your API keys never leave your server." />
+  <meta property="og:url" content="https://magnetio.peterdsp.dev/" />
+  <meta property="og:site_name" content="Magnetio" />
+  <meta property="og:image" content="https://magnetio.peterdsp.dev/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Magnetio - Self-Hosted Stremio Addon" />
+  <meta name="twitter:description" content="Stream anything with 22+ providers, 8 debrid services, and Torznab support. Open source and self-hosted." />
+  <meta name="twitter:image" content="https://magnetio.peterdsp.dev/og-image.png" />
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Magnetio",
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Docker, Node.js",
+    "url": "https://magnetio.peterdsp.dev",
+    "description": "Self-hosted Stremio addon with 22+ torrent providers, 8 debrid services, Torznab/Jackett/Prowlarr support, TMDB recommendations, and subtitle sync pipeline.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "peterdsp",
+      "url": "https://github.com/peterdsp"
+    },
+    "softwareVersion": "${escapeHtml(manifest.version)}",
+    "license": "https://github.com/peterdsp/Magnetio/blob/main/LICENSE",
+    "codeRepository": "https://github.com/peterdsp/Magnetio",
+    "featureList": [
+      "22+ torrent providers",
+      "8 debrid services (Real-Debrid, Premiumize, AllDebrid, TorBox, etc.)",
+      "Torznab/Jackett/Prowlarr integration",
+      "TMDB similar content recommendations",
+      "Subtitle search and sync pipeline",
+      "Background cache prewarm",
+      "Self-hosted on Raspberry Pi or any server"
+    ]
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
-    [data-theme="dark"] {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --border: #2a2d3a;
-      --text-primary: #e8eaed;
-      --text-secondary: #9ca3af;
-      --accent: #34d399;
-      --accent-hover: #6ee7b7;
-      --accent-subtle: rgba(52, 211, 153, 0.12);
-      --input-bg: #141620;
-      --chip-bg: #1e2130;
-      --chip-bg-active: rgba(52, 211, 153, 0.18);
-      --chip-border-active: #34d399;
-      --code-bg: #0d0f15;
-      --shadow: 0 1px 3px rgba(0,0,0,0.3);
-      --footer-bg: #1a1d27;
-    }
+    html { scroll-behavior: smooth; }
 
-    [data-theme="light"] {
-      --bg: #f8f9fb;
-      --surface: #ffffff;
-      --border: #e2e5eb;
-      --text-primary: #111827;
-      --text-secondary: #6b7280;
-      --accent: #10b981;
-      --accent-hover: #059669;
-      --accent-subtle: rgba(16, 185, 129, 0.1);
-      --input-bg: #f3f4f6;
-      --chip-bg: #f3f4f6;
-      --chip-bg-active: rgba(16, 185, 129, 0.12);
-      --chip-border-active: #10b981;
-      --code-bg: #f0f1f3;
-      --shadow: 0 1px 3px rgba(0,0,0,0.08);
-      --footer-bg: #ffffff;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    * { box-sizing: border-box; margin: 0; }
+    :root {
+      --bg: #06070a;
+      --surface: rgba(255,255,255,0.04);
+      --surface-solid: #0d0e12;
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.15);
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-muted: rgba(255,255,255,0.3);
+      --accent: #a78bfa;
+      --accent-hover: #c4b5fd;
+      --gradient-start: #667eea;
+      --gradient-end: #764ba2;
+      --success: #34d399;
+      --input-bg: rgba(255,255,255,0.05);
+      --chip-bg: rgba(255,255,255,0.06);
+      --chip-bg-active: rgba(167,139,250,0.15);
+      --chip-border-active: #a78bfa;
+      --code-bg: rgba(0,0,0,0.4);
+    }
 
     body {
       min-height: 100vh;
       color: var(--text-primary);
       background: var(--bg);
       font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-      padding: 32px 20px 48px;
-      transition: background 0.2s, color 0.2s;
+      overflow-x: hidden;
     }
 
-    .shell {
-      max-width: 1100px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: 24px;
-      align-items: start;
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: var(--shadow);
-      transition: background 0.2s, border-color 0.2s;
-    }
-
-    /* Header */
-    .header {
-      padding: 24px 28px;
+    /* ---- Navbar ---- */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 0 32px;
+      height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      background: rgba(6,7,10,0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
     }
 
-    .header-left {
+    .nav-left {
       display: flex;
       align-items: center;
       gap: 12px;
     }
 
-    .header-logo {
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
+    .nav-brand {
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: -0.04em;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
-    .header-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-
-    .version-badge {
+    .nav-version {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
       padding: 3px 10px;
       border-radius: 999px;
-      background: var(--accent-subtle);
-      color: var(--accent);
-      font-size: 0.75rem;
-      font-weight: 600;
     }
 
-    .theme-toggle {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--input-bg);
-      color: var(--text-secondary);
+    .nav-cta {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 22px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      color: #fff;
+      font-family: "Inter", sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
       cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+      text-decoration: none;
+    }
+
+    .nav-cta:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* ---- Hero ---- */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      overflow: hidden;
+    }
+
+    .hero-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    .hero-orb-1 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, var(--gradient-start), transparent 70%);
+      top: -200px;
+      left: -100px;
+      animation: floatOrb1 20s ease-in-out infinite;
+    }
+
+    .hero-orb-2 {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, var(--gradient-end), transparent 70%);
+      bottom: -150px;
+      right: -100px;
+      animation: floatOrb2 25s ease-in-out infinite;
+    }
+
+    .hero-orb-3 {
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, var(--accent), transparent 70%);
+      top: 40%;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: floatOrb3 18s ease-in-out infinite;
+      opacity: 0.15;
+    }
+
+    @keyframes floatOrb1 {
+      0%, 100% { transform: translate(0, 0); }
+      33% { transform: translate(60px, 40px); }
+      66% { transform: translate(-40px, 20px); }
+    }
+
+    @keyframes floatOrb2 {
+      0%, 100% { transform: translate(0, 0); }
+      33% { transform: translate(-50px, -30px); }
+      66% { transform: translate(30px, -50px); }
+    }
+
+    @keyframes floatOrb3 {
+      0%, 100% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.2); }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 800px;
+    }
+
+    .hero-headline {
+      font-weight: 800;
+      font-size: 4rem;
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+      margin-bottom: 24px;
+    }
+
+    .hero-headline .gradient-text {
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: 1.15rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      max-width: 560px;
+      margin: 0 auto 40px;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-hero-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 32px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      color: #fff;
+      font-family: "Inter", sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-hero-primary:hover { opacity: 0.9; transform: translateY(-2px); }
+
+    .btn-hero-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 32px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-primary);
+      font-family: "Inter", sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-hero-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ---- Stats Bar ---- */
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      padding: 0 24px;
+      max-width: 960px;
+      margin: -40px auto 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .stat-item {
+      flex: 1;
+      text-align: center;
+      padding: 32px 24px;
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-right: none;
+    }
+
+    .stat-item:first-child { border-radius: 16px 0 0 16px; }
+    .stat-item:last-child { border-radius: 0 16px 16px 0; border-right: 1px solid var(--border); }
+
+    .stat-number {
+      font-weight: 800;
+      font-size: 2rem;
+      letter-spacing: -0.04em;
+      color: var(--success);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+
+    /* ---- Section container ---- */
+    .page-section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 100px 24px;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+    }
+
+    .page-section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .section-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .section-heading {
+      font-weight: 800;
+      font-size: 2.4rem;
+      letter-spacing: -0.04em;
+      margin-bottom: 16px;
+    }
+
+    .section-sub {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 600px;
+      margin-bottom: 48px;
+    }
+
+    /* ---- Features Grid ---- */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 28px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .feature-card:hover {
+      border-color: var(--border-hover);
+      box-shadow: 0 0 30px rgba(102,126,234,0.08);
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .feature-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+
+    .feature-desc {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    /* ---- How It Works ---- */
+    .how-steps {
+      display: flex;
+      gap: 0;
+      align-items: flex-start;
+      position: relative;
+    }
+
+    .how-step {
+      flex: 1;
+      text-align: center;
+      padding: 0 24px;
+      position: relative;
+    }
+
+    .how-step-number {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      color: #fff;
+      font-weight: 800;
+      font-size: 1.2rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: border-color 0.2s;
+      margin: 0 auto 20px;
+      position: relative;
+      z-index: 1;
     }
 
-    .theme-toggle:hover {
-      border-color: var(--accent);
-      color: var(--accent);
+    .how-step-line {
+      position: absolute;
+      top: 28px;
+      left: calc(50% + 28px);
+      width: calc(100% - 56px);
+      height: 2px;
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      opacity: 0.3;
     }
 
-    /* Hero */
-    .hero {
-      padding: 0 28px 28px;
-    }
+    .how-step:last-child .how-step-line { display: none; }
 
-    .hero h1 {
-      font-size: 1.5rem;
+    .how-step-title {
       font-weight: 700;
-      letter-spacing: -0.03em;
-      line-height: 1.3;
-      margin-bottom: 8px;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
     }
 
-    .hero p {
+    .how-step-desc {
+      font-size: 0.88rem;
       color: var(--text-secondary);
-      font-size: 0.92rem;
       line-height: 1.6;
     }
 
-    .stack { display: grid; gap: 20px; }
+    /* ---- Configure Section ---- */
+    .configure-section {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 100px 24px;
+    }
 
-    /* Section cards */
-    .section {
-      padding: 24px 28px;
+    .config-card {
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 24px;
       display: grid;
-      gap: 18px;
+      gap: 20px;
     }
 
-    .section-title {
-      font-size: 0.92rem;
-      font-weight: 600;
-      padding-left: 12px;
-      border-left: 3px solid var(--accent);
+    .config-card-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
     }
 
-    .section-desc {
+    .config-card-desc {
+      font-size: 0.85rem;
       color: var(--text-secondary);
-      font-size: 0.88rem;
-      line-height: 1.55;
+      line-height: 1.65;
     }
+
+    .config-card-desc a { color: var(--accent); }
 
     .field-grid {
       display: grid;
@@ -246,29 +588,25 @@ export function landingTemplate(manifest, initialConfig = {}) {
     label {
       display: grid;
       gap: 6px;
+      font-size: 0.78rem;
       color: var(--text-secondary);
-      font-size: 0.82rem;
-      font-weight: 500;
     }
 
     select, input[type="number"] {
       width: 100%;
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       background: var(--input-bg);
       color: var(--text-primary);
-      padding: 10px 12px;
-      font: inherit;
-      font-size: 0.88rem;
+      padding: 11px 14px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.82rem;
       outline: none;
-      transition: border-color 0.15s;
+      transition: border-color 0.2s;
     }
 
-    select:focus, input:focus {
-      border-color: var(--accent);
-    }
+    select:focus, input:focus { border-color: var(--accent); }
 
-    /* Chip grids */
     .chip-grid {
       display: flex;
       flex-wrap: wrap;
@@ -278,18 +616,19 @@ export function landingTemplate(manifest, initialConfig = {}) {
     .chip {
       cursor: pointer;
       display: inline-flex;
-      font-size: 0.82rem;
-      font-weight: 500;
+      font-size: 0.78rem;
     }
 
     .chip span {
       display: inline-block;
-      padding: 6px 14px;
+      padding: 7px 16px;
       border-radius: 999px;
       background: var(--chip-bg);
       border: 1px solid var(--border);
       color: var(--text-secondary);
-      transition: all 0.15s;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.75rem;
+      transition: all 0.2s;
       user-select: none;
     }
 
@@ -302,27 +641,22 @@ export function landingTemplate(manifest, initialConfig = {}) {
 
     .chip input { display: none; }
 
-    /* Password fields */
-    .password-wrap {
-      position: relative;
-    }
+    .password-wrap { position: relative; }
 
     .password-wrap input {
       width: 100%;
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       background: var(--input-bg);
       color: var(--text-primary);
-      padding: 10px 40px 10px 12px;
-      font: inherit;
-      font-size: 0.88rem;
+      padding: 11px 40px 11px 14px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.82rem;
       outline: none;
-      transition: border-color 0.15s;
+      transition: border-color 0.2s;
     }
 
-    .password-wrap input:focus {
-      border-color: var(--accent);
-    }
+    .password-wrap input:focus { border-color: var(--accent); }
 
     .eye-toggle {
       position: absolute;
@@ -340,73 +674,65 @@ export function landingTemplate(manifest, initialConfig = {}) {
 
     .eye-toggle:hover { color: var(--accent); }
 
-    /* Summary sidebar */
-    .summary {
-      position: sticky;
-      top: 24px;
-      padding: 24px;
-      display: grid;
-      gap: 18px;
+    /* ---- Install Bar ---- */
+    .install-bar {
+      max-width: 800px;
+      margin: 0 auto 60px;
+      padding: 0 24px;
     }
 
-    .summary h2 {
-      font-size: 1.1rem;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-    }
-
-    .summary-desc {
-      color: var(--text-secondary);
-      font-size: 0.88rem;
-      line-height: 1.55;
-    }
-
-    .preview {
-      padding: 14px;
-      border-radius: 12px;
-      background: var(--code-bg);
+    .install-card {
+      background: var(--surface);
+      backdrop-filter: blur(12px);
       border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      display: grid;
+      gap: 16px;
     }
 
-    .preview-label {
-      color: var(--text-secondary);
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
+    .install-card-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      margin-bottom: 8px;
+      color: var(--text-muted);
     }
 
-    .preview-code {
+    .install-card-url {
       font-family: "JetBrains Mono", monospace;
       color: var(--accent);
       word-break: break-all;
       line-height: 1.6;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
     }
 
-    .actions { display: grid; gap: 10px; }
+    .install-card-actions {
+      display: flex;
+      gap: 12px;
+    }
 
     .btn {
-      width: 100%;
       border: none;
-      border-radius: 12px;
-      padding: 12px 16px;
-      font: inherit;
-      font-size: 0.9rem;
+      border-radius: 999px;
+      padding: 14px 28px;
+      font-family: "Inter", sans-serif;
       font-weight: 600;
+      font-size: 0.88rem;
       cursor: pointer;
-      transition: opacity 0.15s;
+      transition: all 0.2s;
+      text-align: center;
+      flex: 1;
     }
 
     .btn:hover { opacity: 0.88; }
 
     .btn-primary {
       color: #fff;
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
     }
 
-    [data-theme="dark"] .btn-primary { color: #0f1117; }
+    .btn-primary:hover { transform: translateY(-1px); }
 
     .btn-secondary {
       color: var(--text-primary);
@@ -414,32 +740,41 @@ export function landingTemplate(manifest, initialConfig = {}) {
       border: 1px solid var(--border);
     }
 
-    .btn-secondary:hover {
-      border-color: var(--accent);
-    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
 
     .status {
+      font-family: "JetBrains Mono", monospace;
       color: var(--accent);
-      font-size: 0.84rem;
+      font-size: 0.78rem;
       min-height: 1.2rem;
+      text-align: center;
     }
 
-    .footnote {
+    /* ---- Footer ---- */
+    .site-footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 24px;
+      text-align: center;
+    }
+
+    .footer-text {
+      font-size: 0.82rem;
       color: var(--text-secondary);
-      font-size: 0.8rem;
-      line-height: 1.5;
+      line-height: 1.8;
     }
 
-    .footnote a { color: var(--accent); }
+    .footer-text a { color: var(--accent); text-decoration: none; }
+    .footer-text a:hover { text-decoration: underline; }
 
-    /* Mobile footer */
+    /* ---- Mobile footer ---- */
     .mobile-footer {
       display: none;
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: var(--footer-bg);
+      background: rgba(6,7,10,0.95);
+      backdrop-filter: blur(20px);
       border-top: 1px solid var(--border);
       padding: 12px 16px;
       z-index: 100;
@@ -450,22 +785,25 @@ export function landingTemplate(manifest, initialConfig = {}) {
       gap: 10px;
     }
 
-    .mobile-footer .btn { flex: 1; padding: 11px 12px; font-size: 0.85rem; }
+    .mobile-footer .btn {
+      flex: 1;
+      padding: 12px 12px;
+      font-size: 0.8rem;
+    }
 
     .mobile-footer .footer-preview {
       margin-top: 8px;
       display: none;
     }
 
-    .mobile-footer .footer-preview.open {
-      display: block;
-    }
+    .mobile-footer .footer-preview.open { display: block; }
 
     .mobile-footer .preview-toggle {
       background: none;
       border: none;
+      font-family: "JetBrains Mono", monospace;
       color: var(--text-secondary);
-      font-size: 0.78rem;
+      font-size: 0.72rem;
       cursor: pointer;
       padding: 6px 0 0;
       text-decoration: underline;
@@ -475,153 +813,314 @@ export function landingTemplate(manifest, initialConfig = {}) {
       font-family: "JetBrains Mono", monospace;
       color: var(--accent);
       word-break: break-all;
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       line-height: 1.5;
       margin-top: 6px;
     }
 
+    /* ---- Responsive ---- */
     @media (max-width: 980px) {
-      .shell { grid-template-columns: 1fr; }
-      .summary { position: static; display: none; }
+      .hero-headline { font-size: 2.8rem; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .stats-bar { flex-wrap: wrap; margin-top: 0; }
+      .stat-item { flex: 1 1 45%; }
+      .stat-item:first-child { border-radius: 16px 0 0 0; }
+      .stat-item:nth-child(2) { border-radius: 0 16px 0 0; border-right: 1px solid var(--border); }
+      .stat-item:nth-child(3) { border-radius: 0 0 0 16px; }
+      .stat-item:last-child { border-radius: 0 0 16px 0; }
+      .how-steps { flex-direction: column; gap: 32px; }
+      .how-step { text-align: left; display: flex; gap: 20px; align-items: flex-start; padding: 0; }
+      .how-step-number { margin: 0; flex-shrink: 0; }
+      .how-step-line { display: none !important; }
+      .install-bar { display: none; }
       .mobile-footer { display: block; }
       body { padding-bottom: 90px; }
     }
 
     @media (max-width: 640px) {
-      body { padding: 16px 12px 90px; }
-      .header, .hero, .section { padding-left: 20px; padding-right: 20px; }
+      .navbar { padding: 0 16px; }
+      .nav-version { display: none; }
+      .hero { padding: 100px 16px 60px; }
+      .hero-headline { font-size: 2rem; }
+      .hero-sub { font-size: 0.95rem; }
+      .features-grid { grid-template-columns: 1fr; }
+      .section-heading { font-size: 1.8rem; }
       .field-grid { grid-template-columns: 1fr; }
+      .config-card { padding: 24px 20px; }
+      .page-section { padding: 60px 16px; }
+      .configure-section { padding: 60px 16px; }
     }
   </style>
 </head>
 <body>
-  <div class="shell">
-    <div class="stack">
-      <div class="card">
-        <div class="header">
-          <div class="header-left">
-            <img class="header-logo" src="${escapeHtml(manifest.logo)}" alt="" />
-            <span class="header-title">${escapeHtml(manifest.name)}</span>
-            <span class="version-badge">v${escapeHtml(manifest.version)}</span>
-          </div>
-          <button class="theme-toggle" id="themeToggle" type="button" title="Toggle theme">
-            ${SVG_MOON}
-          </button>
-        </div>
-        <div class="hero">
-          <h1>Configure your addon</h1>
-          <p>Tune stream ranking, subtitle preferences and debrid services. The result is a manifest URL ready to install in Stremio.</p>
-        </div>
-      </div>
 
-      <section class="card section">
-        <h2 class="section-title">Stream Rules</h2>
-        <div class="field-grid">
-          <label>
-            Sort order
-            <select id="sort">
-              <option value="qualityseeders">Quality then seeders</option>
-              <option value="qualitysize">Quality then size</option>
-              <option value="seeders">Seeders only</option>
-              <option value="size">Size only</option>
-            </select>
-          </label>
-          <label>
-            Max streams
-            <select id="limit">
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="50">50</option>
-            </select>
-          </label>
-        </div>
-
-        <label>
-          Allowed qualities
-          <div class="chip-grid" id="qualities">
-            ${QUALITIES.map(([value, label]) => `<label class="chip"><input type="checkbox" value="${value}" /><span>${label}</span></label>`).join('')}
-          </div>
-        </label>
-
-        <label>
-          Audio languages
-          <div class="chip-grid" id="languages">
-            ${LANGUAGES.map(([value, label]) => `<label class="chip"><input type="checkbox" value="${value}" /><span>${label}</span></label>`).join('')}
-          </div>
-        </label>
-      </section>
-
-      <section class="card section">
-        <h2 class="section-title">Subtitles</h2>
-        <p class="section-desc">Select every subtitle language you want returned. Magnetio provides a dedicated Stremio subtitles resource.</p>
-        <label>
-          Subtitle languages
-          <div class="chip-grid" id="subtitleLanguages">
-            ${LANGUAGES.map(([value, label]) => `<label class="chip"><input type="checkbox" value="${value}" /><span>${label}</span></label>`).join('')}
-          </div>
-        </label>
-      </section>
-
-      <section class="card section">
-        <h2 class="section-title">Debrid Services</h2>
-        <p class="section-desc">Add API keys for your debrid services. Cached torrents resolve as direct streams automatically.</p>
-        <div class="field-grid">
-          <label>
-            Debrid prewarm
-            <select id="prewarm">
-              <option value="1">Enabled</option>
-              <option value="0">Disabled</option>
-            </select>
-          </label>
-          <label>
-            Prewarm top uncached
-            <select id="prewarmLimit">
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="5">5</option>
-            </select>
-          </label>
-        </div>
-        <div class="field-grid">
-          ${DEBRID_FIELDS.map(([id, label]) => `
-            <label>
-              ${label}
-              <div class="password-wrap">
-                <input type="password" id="${id}" autocomplete="off" placeholder="${label} API key" />
-                <button type="button" class="eye-toggle" data-target="${id}" title="Toggle visibility">${SVG_EYE}</button>
-              </div>
-            </label>
-          `).join('')}
-        </div>
-      </section>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <span class="nav-brand">${escapeHtml(manifest.name)}</span>
+      <span class="nav-version">v${escapeHtml(manifest.version)}</span>
     </div>
+    <a href="#configure" class="nav-cta">Configure</a>
+  </nav>
 
-    <aside class="card summary" id="desktopSummary">
-      <div>
-        <h2>Install Target</h2>
-        <p class="summary-desc">This is the manifest URL Stremio will install. Re-open from a configured URL to adjust settings later.</p>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="hero-orb hero-orb-3"></div>
+    <div class="hero-content">
+      <h1 class="hero-headline">
+        <span class="gradient-text">Stream anything.</span><br />Own your setup.
+      </h1>
+      <p class="hero-sub">
+        Magnetio is a self-hosted Stremio addon that aggregates torrents from 22+ providers,
+        resolves them through 8 debrid services, and delivers instant high-quality streams.
+      </p>
+      <div class="hero-buttons">
+        <a href="#configure" class="btn-hero-primary">Get Started</a>
+        <a href="https://github.com/peterdsp/Magnetio" target="_blank" rel="noreferrer" class="btn-hero-secondary">View on GitHub</a>
       </div>
+    </div>
+  </section>
 
-      <div class="preview">
-        <div class="preview-label">Manifest URL</div>
-        <div class="preview-code" id="manifestPreview"></div>
-      </div>
-
-      <div class="actions">
-        <button class="btn btn-primary" type="button" id="installBtn">Install in Stremio</button>
-        <button class="btn btn-secondary" type="button" id="copyBtn">Copy manifest URL</button>
-      </div>
-
-      <div class="status" id="status"></div>
-      <div class="footnote">
-        Magnetio does not host content.
-        <a href="https://github.com/Magnetio/magnetio#disclaimer" target="_blank" rel="noreferrer">Read disclaimer</a>
-      </div>
-    </aside>
+  <!-- Stats Bar -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-number">22+</div>
+      <div class="stat-label">Torrent Providers</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">8</div>
+      <div class="stat-label">Debrid Services</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">500+</div>
+      <div class="stat-label">Indexers via Torznab</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">24/7</div>
+      <div class="stat-label">Self-Hosted</div>
+    </div>
   </div>
 
+  <!-- Features -->
+  <section class="page-section">
+    <div class="section-label">Features</div>
+    <h2 class="section-heading">Everything you need to stream</h2>
+    <p class="section-sub">Built for power users who want full control over their streaming pipeline.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">&#9889;</span>
+        <div class="feature-title">Multi-Provider Scraping</div>
+        <div class="feature-desc">22 torrent providers queried in parallel with smart deduplication and quality ranking.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">&#128279;</span>
+        <div class="feature-title">Debrid Integration</div>
+        <div class="feature-desc">8 debrid services for instant cached streams at full speed with automatic fallback.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">&#128270;</span>
+        <div class="feature-title">Torznab Support</div>
+        <div class="feature-desc">Connect Jackett or Prowlarr for 500+ additional indexers and private trackers.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">&#10024;</span>
+        <div class="feature-title">Smart Recommendations</div>
+        <div class="feature-desc">TMDB-powered similar content suggestions for every movie and series title.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">&#127916;</span>
+        <div class="feature-title">Subtitle Pipeline</div>
+        <div class="feature-desc">Automatic subtitle search, download, and sync with ffsubsync in 15 languages.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">&#128274;</span>
+        <div class="feature-title">Self-Hosted</div>
+        <div class="feature-desc">Runs on a Raspberry Pi. Your API keys never leave your server. No tracking, no telemetry.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="page-section">
+    <div class="section-label">How it works</div>
+    <h2 class="section-heading">Three steps to streaming</h2>
+    <p class="section-sub">From configuration to playback in under a minute.</p>
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="how-step-number">1</div>
+        <div class="how-step-line"></div>
+        <div>
+          <div class="how-step-title">Configure</div>
+          <div class="how-step-desc">Set your quality preferences, debrid API keys, and optional Torznab indexers below.</div>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="how-step-number">2</div>
+        <div class="how-step-line"></div>
+        <div>
+          <div class="how-step-title">Install</div>
+          <div class="how-step-desc">One-click install into Stremio via the generated manifest URL. Works on any device.</div>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="how-step-number">3</div>
+        <div>
+          <div class="how-step-title">Stream</div>
+          <div class="how-step-desc">Play any movie or series with instant debrid-resolved streams at full quality.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Configure -->
+  <div class="configure-section" id="configure">
+    <div class="section-label">Configure</div>
+    <h2 class="section-heading">Set up your addon</h2>
+    <p class="section-sub">Customize providers, quality filters, subtitles, and API keys.</p>
+
+    <div class="config-card">
+      <div class="config-card-title">Stream Rules</div>
+      <div class="field-grid">
+        <label>
+          Sort order
+          <select id="sort">
+            <option value="qualityseeders">Quality then seeders</option>
+            <option value="qualitysize">Quality then size</option>
+            <option value="seeders">Seeders only</option>
+            <option value="size">Size only</option>
+          </select>
+        </label>
+        <label>
+          Max streams
+          <select id="limit">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+        </label>
+      </div>
+
+      <label>
+        Allowed qualities
+        <div class="chip-grid" id="qualities">
+          ${QUALITIES.map(([value, label]) => `<label class="chip"><input type="checkbox" value="${value}" /><span>${label}</span></label>`).join('')}
+        </div>
+      </label>
+
+      <label>
+        Audio languages
+        <div class="chip-grid" id="languages">
+          ${LANGUAGES.map(([value, label]) => `<label class="chip"><input type="checkbox" value="${value}" /><span>${label}</span></label>`).join('')}
+        </div>
+      </label>
+    </div>
+
+    <div class="config-card">
+      <div class="config-card-title">Subtitles</div>
+      <div class="config-card-desc">Select every subtitle language you want returned. Magnetio provides a dedicated Stremio subtitles resource.</div>
+      <label>
+        Subtitle languages
+        <div class="chip-grid" id="subtitleLanguages">
+          ${LANGUAGES.map(([value, label]) => `<label class="chip"><input type="checkbox" value="${value}" /><span>${label}</span></label>`).join('')}
+        </div>
+      </label>
+    </div>
+
+    <div class="config-card">
+      <div class="config-card-title">Recommendations</div>
+      <div class="config-card-desc">Enable "More Like This" suggestions powered by TMDB. Get a free API key at <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer">themoviedb.org</a>.</div>
+      <div class="field-grid">
+        <label>
+          TMDB API Key
+          <div class="password-wrap">
+            <input type="password" id="tmdb" autocomplete="off" placeholder="TMDB API key (v3 auth)" />
+            <button type="button" class="eye-toggle" data-target="tmdb" title="Toggle visibility">${SVG_EYE}</button>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div class="config-card">
+      <div class="config-card-title">Torznab / Jackett / Prowlarr</div>
+      <div class="config-card-desc">Connect a Torznab-compatible indexer manager. Enter the full Torznab API URL and your API key.</div>
+      <div class="field-grid">
+        <label>
+          Torznab URL
+          <div class="password-wrap">
+            <input type="text" id="torznabUrl" autocomplete="off" placeholder="http://jackett:9117/api/v2.0/indexers/all/results/torznab" />
+          </div>
+        </label>
+        <label>
+          Torznab API Key
+          <div class="password-wrap">
+            <input type="password" id="torznabKey" autocomplete="off" placeholder="API key" />
+            <button type="button" class="eye-toggle" data-target="torznabKey" title="Toggle visibility">${SVG_EYE}</button>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div class="config-card">
+      <div class="config-card-title">Debrid Services</div>
+      <div class="config-card-desc">Add API keys for your debrid services. Cached torrents resolve as direct streams automatically.</div>
+      <div class="field-grid">
+        <label>
+          Debrid prewarm
+          <select id="prewarm">
+            <option value="1">Enabled</option>
+            <option value="0">Disabled</option>
+          </select>
+        </label>
+        <label>
+          Prewarm top uncached
+          <select id="prewarmLimit">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="5">5</option>
+          </select>
+        </label>
+      </div>
+      <div class="field-grid">
+        ${DEBRID_FIELDS.map(([id, label]) => `
+          <label>
+            ${label}
+            <div class="password-wrap">
+              <input type="password" id="${id}" autocomplete="off" placeholder="${label} API key" />
+              <button type="button" class="eye-toggle" data-target="${id}" title="Toggle visibility">${SVG_EYE}</button>
+            </div>
+          </label>
+        `).join('')}
+      </div>
+    </div>
+  </div>
+
+  <!-- Install Bar (desktop) -->
+  <div class="install-bar" id="desktopSummary">
+    <div class="install-card">
+      <div class="install-card-label">Manifest URL</div>
+      <div class="install-card-url" id="manifestPreview"></div>
+      <div class="install-card-actions">
+        <button class="btn btn-primary" type="button" id="installBtn">Install in Stremio</button>
+        <button class="btn btn-secondary" type="button" id="copyBtn">Copy URL</button>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-text">
+      Magnetio does not host or distribute any content.
+      <a href="https://github.com/peterdsp/Magnetio#disclaimer" target="_blank" rel="noreferrer">Read disclaimer</a>.<br />
+      <a href="https://github.com/peterdsp/Magnetio" target="_blank" rel="noreferrer">GitHub</a>
+    </div>
+  </footer>
+
+  <!-- Mobile footer -->
   <div class="mobile-footer" id="mobileFooter">
     <div class="footer-actions">
       <button class="btn btn-primary" type="button" id="mobileInstallBtn">Install</button>
@@ -645,17 +1144,21 @@ export function landingTemplate(manifest, initialConfig = {}) {
 
     function updateThemeIcon() {
       const btn = document.getElementById('themeToggle');
+      if (!btn) return;
       const current = document.documentElement.getAttribute('data-theme');
       btn.innerHTML = current === 'dark' ? '${SVG_MOON}' : '${SVG_SUN}';
     }
 
-    document.getElementById('themeToggle').addEventListener('click', function() {
-      const current = document.documentElement.getAttribute('data-theme');
-      const next = current === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('magnetio-theme', next);
-      updateThemeIcon();
-    });
+    var themeBtn = document.getElementById('themeToggle');
+    if (themeBtn) {
+      themeBtn.addEventListener('click', function() {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('magnetio-theme', next);
+        updateThemeIcon();
+      });
+    }
 
     window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function(e) {
       if (!localStorage.getItem('magnetio-theme')) {
@@ -697,6 +1200,11 @@ export function landingTemplate(manifest, initialConfig = {}) {
       setChipGrid('languages', initialConfig.languages || []);
       setChipGrid('subtitleLanguages', initialConfig.subtitleLanguages || ['en']);
 
+      document.getElementById('tmdb').value = initialConfig.tmdbApiKey || '';
+
+      document.getElementById('torznabUrl').value = initialConfig.torznabUrl || '';
+      document.getElementById('torznabKey').value = initialConfig.torznabApiKey || '';
+
       document.getElementById('rd').value = initialConfig.realDebridApiKey || '';
       document.getElementById('pm').value = initialConfig.premiumizeApiKey || '';
       document.getElementById('ad').value = initialConfig.allDebridApiKey || '';
@@ -721,6 +1229,14 @@ export function landingTemplate(manifest, initialConfig = {}) {
       if (qualities.length) parts.push('qualities=' + qualities.join(','));
       if (languages.length) parts.push('languages=' + languages.join(','));
       if (subtitleLanguages.length) parts.push('subtitleLanguages=' + subtitleLanguages.join(','));
+
+      var tmdbKey = document.getElementById('tmdb').value.trim();
+      if (tmdbKey) parts.push('tmdb=' + tmdbKey);
+
+      var torznabUrl = document.getElementById('torznabUrl').value.trim();
+      var torznabKey = document.getElementById('torznabKey').value.trim();
+      if (torznabUrl) parts.push('torznabUrl=' + encodeURIComponent(torznabUrl));
+      if (torznabKey) parts.push('torznabKey=' + encodeURIComponent(torznabKey));
 
       var keys = ['rd','pm','ad','dl','ed','oc','tb','pu'];
       keys.forEach(function(id) {
@@ -783,6 +1299,19 @@ export function landingTemplate(manifest, initialConfig = {}) {
         input.type = showing ? 'password' : 'text';
         this.innerHTML = showing ? '${SVG_EYE}' : '${SVG_EYE_OFF}';
       });
+    });
+
+    // Fade-in on scroll (IntersectionObserver)
+    document.querySelectorAll('.page-section').forEach(function(section) {
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
+      observer.observe(section);
     });
 
     applyInitialState();
