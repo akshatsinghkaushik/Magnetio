@@ -22,10 +22,10 @@ const REQUEST_TIMEOUT = 8000;
 function buildPosterUrl(item, tmdbApiKey, rpdbApiKey, type) {
   const imdbId = item.external_ids?.imdb_id;
 
-  // Try RPDB first if API key and IMDb ID available
+  // Try RPDB first if API key and IMDb ID available.
+  // The path segment is the ID *source* (imdb), not the media type.
   if (rpdbApiKey && imdbId) {
-    const mediaType = type === 'series' ? 'series' : 'movie';
-    return `https://api.ratingposterdb.com/${rpdbApiKey}/${mediaType}/poster-default/${imdbId}.jpg`;
+    return `https://api.ratingposterdb.com/${rpdbApiKey}/imdb/poster-default/${imdbId}.jpg`;
   }
 
   // Fallback to TMDB
@@ -45,7 +45,9 @@ function buildPosterUrl(item, tmdbApiKey, rpdbApiKey, type) {
  */
 export const StreamingServices = {
   netflix:   { id: 8,   name: 'Netflix',   multiCountry: true },
-  prime:     { id: 9,   name: 'Prime Video', multiCountry: true },
+  // TMDB splits Amazon Prime Video across two provider IDs by region:
+  // 9 (US/GB/DE/JP...) and 119 (AU/CA/FR/IN...). OR both so every region resolves.
+  prime:     { id: 9,   name: 'Prime Video', multiCountry: true, providerIds: [9, 119] },
   disney:    { id: 337, name: 'Disney+',   multiCountry: true },
   hulu:      { id: 15,  name: 'Hulu',      multiCountry: false },
   max:       { id: 1899, name: 'Max',       multiCountry: true },
@@ -141,12 +143,16 @@ export async function getStreamingCatalog(catalogId, type, apiKey, rpdbApiKey, o
       const page = Math.floor(skip / 20) + 1;
       const endpoint = catalogType === 'series' ? 'tv' : 'movie';
 
+      // Some services map to multiple TMDB provider IDs (region-dependent).
+      // OR them with '|' so the correct one resolves regardless of region.
+      const watchProviders = (service.providerIds || [service.id]).join('|');
+
       const { data } = await axios.get(`${TMDB_BASE}/discover/${endpoint}`, {
         timeout: REQUEST_TIMEOUT,
         params: {
           api_key: apiKey,
           page,
-          with_watch_providers: service.id,
+          with_watch_providers: watchProviders,
           watch_region: country.toUpperCase(),
           sort_by: 'popularity.desc',
         },
@@ -255,11 +261,10 @@ function toStremioMeta(item, type, rpdbApiKey) {
     name: title,
   };
 
-  // RPDB poster with rating badge (priority)
-  // RPDB uses 'tv' for series, 'movie' for movies
-  const rpdbType = type === 'series' ? 'tv' : 'movie';
+  // RPDB poster with rating badge (priority).
+  // The path segment is the ID *source* (imdb), not the media type.
   if (rpdbApiKey && imdbId) {
-    meta.poster = `https://api.ratingposterdb.com/${rpdbApiKey}/${rpdbType}/poster-default/${imdbId}.jpg`;
+    meta.poster = `https://api.ratingposterdb.com/${rpdbApiKey}/imdb/poster-default/${imdbId}.jpg`;
   } else if (item.poster_path) {
     // Fallback to TMDB poster
     meta.poster = `${POSTER_BASE}${item.poster_path}`;
