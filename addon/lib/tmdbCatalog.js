@@ -48,10 +48,10 @@ export const StreamingServices = {
   prime:     { id: 9,   name: 'Prime Video', multiCountry: true },
   disney:    { id: 337, name: 'Disney+',   multiCountry: true },
   hulu:      { id: 15,  name: 'Hulu',      multiCountry: false },
-  max:       { id: 384, name: 'Max',       multiCountry: true },
-  apple:     { id: 2,   name: 'Apple TV+', multiCountry: true },
+  max:       { id: 1899, name: 'Max',       multiCountry: true },
+  apple:     { id: 350,   name: 'Apple TV+', multiCountry: true },
   peacock:   { id: 386, name: 'Peacock',   multiCountry: false },
-  paramount: { id: 531, name: 'Paramount+', multiCountry: true },
+  paramount: { id: 2303, name: 'Paramount+', multiCountry: true },
 };
 
 /**
