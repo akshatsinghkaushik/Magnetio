@@ -35,6 +35,28 @@ const DEBRID_FIELDS = [
   ['pu', 'Put.io', 'https://put.io/oauth/apps', true],
 ];
 
+const STREAMING_SERVICES = [
+  ['netflix', 'Netflix'],
+  ['prime', 'Prime Video'],
+  ['disney', 'Disney+'],
+  ['hulu', 'Hulu'],
+  ['max', 'Max'],
+  ['apple', 'Apple TV+'],
+  ['peacock', 'Peacock'],
+  ['paramount', 'Paramount+'],
+];
+
+const STREAMING_COUNTRIES = [
+  ['us', 'United States'],
+  ['gb', 'United Kingdom'],
+  ['ca', 'Canada'],
+  ['au', 'Australia'],
+  ['de', 'Germany'],
+  ['fr', 'France'],
+  ['jp', 'Japan'],
+  ['in', 'India'],
+];
+
 const SVG_SUN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
 const SVG_MOON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 const SVG_EYE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -61,7 +83,9 @@ export function landingTemplate(manifest, initialConfig = {}) {
     prewarmDebrid: initialConfig.prewarmDebrid ?? true,
     prewarmLimit: initialConfig.prewarmLimit ?? 3,
     tmdbApiKey: initialConfig.tmdbApiKey ?? '',
-    tmdbCatalogsEnabled: initialConfig.tmdbCatalogsEnabled ?? true,
+    tmdbCatalogsEnabled: initialConfig.tmdbCatalogsEnabled ?? false,
+    streamingServices: initialConfig.streamingServices ?? [],
+    streamingCountries: initialConfig.streamingCountries ?? {},
     torznabUrl: initialConfig.torznabUrl ?? '',
     torznabApiKey: initialConfig.torznabApiKey ?? '',
     realDebridApiKey: initialConfig.realDebridApiKey ?? '',
@@ -1081,8 +1105,8 @@ export function landingTemplate(manifest, initialConfig = {}) {
     </div>
 
     <div class="config-card">
-      <div class="config-card-title">TMDB</div>
-      <div class="config-card-desc">TMDB API key enables catalog browsing (trending, popular, top rated) and "More Like This" suggestions. Get a free API key at <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer">themoviedb.org</a>.</div>
+      <div class="config-card-title">Streaming Catalogs</div>
+      <div class="config-card-desc">Browse movies and TV shows available on your streaming services. Like "What to Watch" – select services and countries to generate catalogs. Requires TMDB API key.</div>
       <div class="field-grid">
         <label>
           TMDB API Key
@@ -1091,10 +1115,30 @@ export function landingTemplate(manifest, initialConfig = {}) {
             <button type="button" class="eye-toggle" data-target="tmdb" title="Toggle visibility">${SVG_EYE}</button>
           </div>
         </label>
-        <label style="margin-top:8px;display:flex;align-items:center;gap:6px;font-size:0.75rem;color:var(--text-secondary);cursor:pointer;">
-          <input type="checkbox" id="tmdbCatalogs" style="width:auto;margin:0;" />
-          <span>Show default catalogs (Trending, Popular, Top Rated, Now Playing)</span>
-        </label>
+      </div>
+      <div style="margin-top:16px;">
+        <label style="display:block;margin-bottom:8px;font-size:0.85rem;color:var(--text-primary);">Select Streaming Services</label>
+        <div class="chip-grid" id="streamingServices">
+          ${STREAMING_SERVICES.map(([id, name]) => `
+            <label class="chip">
+              <input type="checkbox" value="${id}" />
+              <span>${name}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <label style="display:block;margin-bottom:8px;font-size:0.85rem;color:var(--text-primary);">Country per Service (default: US)</label>
+        <div class="field-grid" id="streamingCountries">
+          ${STREAMING_SERVICES.map(([id, name]) => `
+            <label>
+              ${name}
+              <select id="country_${id}">
+                ${STREAMING_COUNTRIES.map(([code, label]) => `<option value="${code}">${label}</option>`).join('')}
+              </select>
+            </label>
+          `).join('')}
+        </div>
       </div>
     </div>
 
@@ -1264,7 +1308,16 @@ export function landingTemplate(manifest, initialConfig = {}) {
       setChipGrid('subtitleLanguages', initialConfig.subtitleLanguages || ['en']);
 
       document.getElementById('tmdb').value = initialConfig.tmdbApiKey || '';
-      document.getElementById('tmdbCatalogs').checked = initialConfig.tmdbCatalogsEnabled !== false;
+
+      // Streaming services checkboxes
+      setChipGrid('streamingServices', initialConfig.streamingServices || []);
+
+      // Streaming country dropdowns
+      (initialConfig.streamingCountries || {});
+      Object.entries(initialConfig.streamingCountries || {}).forEach(function([serviceId, country]) {
+        var select = document.getElementById('country_' + serviceId);
+        if (select) select.value = country;
+      });
 
       document.getElementById('torznabUrl').value = initialConfig.torznabUrl || '';
       document.getElementById('torznabKey').value = initialConfig.torznabApiKey || '';
@@ -1304,8 +1357,17 @@ export function landingTemplate(manifest, initialConfig = {}) {
       var tmdbKey = document.getElementById('tmdb').value.trim();
       if (tmdbKey) parts.push('tmdb=' + tmdbKey);
 
-      // TMDB catalogs flag (only include if disabled, since default is true)
-      if (!document.getElementById('tmdbCatalogs').checked) parts.push('tmdbcatalogs=0');
+      // Streaming services
+      var services = selectedValues('streamingServices');
+      if (services.length) parts.push('streamingservices=' + services.join(','));
+
+      // Streaming countries per service
+      services.forEach(function(serviceId) {
+        var country = document.getElementById('country_' + serviceId).value;
+        if (country && country !== 'us') {
+          parts.push('country_' + serviceId + '=' + country);
+        }
+      });
 
       var torznabUrl = document.getElementById('torznabUrl').value.trim();
       var torznabKey = document.getElementById('torznabKey').value.trim();

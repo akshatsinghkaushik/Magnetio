@@ -8,7 +8,7 @@ import { toStreamInfo } from './lib/streamInfo.js';
 import { getSubtitles } from './lib/subtitles.js';
 import { toStaticStream } from './moch/static.js';
 import { getSimilarContent } from './lib/similar.js';
-import { getTmdbCatalog } from './lib/tmdbCatalog.js';
+import { getStreamingCatalog, getTmdbCatalog } from './lib/tmdbCatalog.js';
 import NamedQueue from './lib/namedQueue.js';
 import pLimit from 'p-limit';
 import { logger } from './lib/logger.js';
@@ -86,13 +86,13 @@ export async function getAddonInterface(config) {
   // ─── CATALOG HANDLER ───────────────────────────────────────────────────────
   builder.defineCatalogHandler(async ({ type, id, extra }) => {
     try {
-      // TMDB default catalogs (trending, popular, top rated, now playing)
-      if (id.startsWith('tmdb_')) {
+      // TMDB streaming service catalogs (What to Watch style: tmdb_netflix_movie_us)
+      if (id.startsWith('tmdb_') && id.match(/^tmdb_\w+_(movie|series)_[a-z]{2}$/)) {
         if (!config.tmdbApiKey) {
           return { metas: [], cacheMaxAge: CACHE_TTL_EMPTY };
         }
         const skip = extra?.skip ? parseInt(extra.skip, 10) : 0;
-        const metas = await getTmdbCatalog(id, type, config.tmdbApiKey, skip);
+        const metas = await getStreamingCatalog(id, type, config.tmdbApiKey, skip);
         return {
           metas,
           cacheMaxAge: metas.length ? 3600 : CACHE_TTL_EMPTY,

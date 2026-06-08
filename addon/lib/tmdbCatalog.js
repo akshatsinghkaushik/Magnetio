@@ -1,7 +1,7 @@
 /**
- * TMDB default catalogs: Trending, Popular, Top Rated, Now Playing / On TV.
+ * TMDB catalogs for streaming services (What to Watch style).
  *
- * These catalogs are available when a TMDB API key is configured.
+ * Provides catalogs for Netflix, Prime Video, Disney+, etc. by country.
  */
 import axios from 'axios';
 import { cacheWrap } from './cache.js';
@@ -15,101 +15,122 @@ const CACHE_TTL_LIST = 3600;        // 1 hour for catalog lists
 const REQUEST_TIMEOUT = 8000;
 
 /**
- * TMDB catalog definitions
+ * Streaming services with their TMDB watch provider IDs.
+ * https://api.themoviedb.org/3/watch/providers
  */
-export const TmdbCatalogs = {
-  trending_movie: {
-    id: 'tmdb_trending_movie',
-    type: 'movie',
-    name: 'TMDB - Trending Movies',
-    endpoint: 'trending/movie/week',
-  },
-  trending_tv: {
-    id: 'tmdb_trending_tv',
-    type: 'series',
-    name: 'TMDB - Trending TV',
-    endpoint: 'trending/tv/week',
-  },
-  popular_movie: {
-    id: 'tmdb_popular_movie',
-    type: 'movie',
-    name: 'TMDB - Popular Movies',
-    endpoint: 'movie/popular',
-  },
-  popular_tv: {
-    id: 'tmdb_popular_tv',
-    type: 'series',
-    name: 'TMDB - Popular TV',
-    endpoint: 'tv/popular',
-  },
-  top_rated_movie: {
-    id: 'tmdb_top_rated_movie',
-    type: 'movie',
-    name: 'TMDB - Top Rated Movies',
-    endpoint: 'movie/top_rated',
-  },
-  top_rated_tv: {
-    id: 'tmdb_top_rated_tv',
-    type: 'series',
-    name: 'TMDB - Top Rated TV',
-    endpoint: 'tv/top_rated',
-  },
-  now_playing: {
-    id: 'tmdb_now_playing',
-    type: 'movie',
-    name: 'TMDB - Now Playing',
-    endpoint: 'movie/now_playing',
-  },
-  on_tv: {
-    id: 'tmdb_on_tv',
-    type: 'series',
-    name: 'TMDB - On TV',
-    endpoint: 'tv/on_the_air',
-  },
+export const StreamingServices = {
+  netflix:   { id: 8,   name: 'Netflix',   defaultCountry: 'us' },
+  prime:     { id: 9,   name: 'Prime Video', defaultCountry: 'us' },
+  disney:    { id: 337, name: 'Disney+',   defaultCountry: 'us' },
+  hulu:      { id: 15,  name: 'Hulu',      defaultCountry: 'us' },
+  max:       { id: 384, name: 'Max',       defaultCountry: 'us' },
+  apple:     { id: 2,   name: 'Apple TV+', defaultCountry: 'us' },
+  peacock:   { id: 386, name: 'Peacock',   defaultCountry: 'us' },
+  paramount: { id: 531, name: 'Paramount+', defaultCountry: 'us' },
 };
 
 /**
- * Fetch a TMDB catalog by catalog ID.
- *
- * @param {string} catalogId - Catalog ID (e.g. 'tmdb_trending_movie')
- * @param {string} type - 'movie' or 'series'
- * @param {string} apiKey - TMDB API key
- * @param {number} skip - Pagination skip (page offset)
- * @returns {Promise<StremioMeta[]>}
+ * Available countries for streaming catalogs.
  */
-export async function getTmdbCatalog(catalogId, type, apiKey, skip = 0) {
-  if (!apiKey) return [];
+export const StreamingCountries = {
+  us: 'United States',
+  gb: 'United Kingdom',
+  ca: 'Canada',
+  au: 'Australia',
+  de: 'Germany',
+  fr: 'France',
+  jp: 'Japan',
+  in: 'India',
+};
 
-  const catalog = Object.values(TmdbCatalogs).find(c => c.id === catalogId);
-  if (!catalog) {
-    logger.warn(`[TMDB Catalog] Unknown catalog: ${catalogId}`);
+/**
+ * Get all streaming service catalogs for a given config.
+ * Returns catalog definitions for manifest.
+ */
+export function getStreamingCatalogs(config) {
+  if (!config?.tmdbApiKey || !config?.streamingServices?.length) {
     return [];
   }
 
-  const cacheKey = `tmdb-catalog:${catalogId}:${skip}`;
+  const catalogs = [];
+  const services = config.streamingServices || [];
+  const countries = config.streamingCountries || {};
+
+  for (const serviceId of services) {
+    const service = StreamingServices[serviceId];
+    if (!service) continue;
+
+    const country = countries[serviceId] || service.defaultCountry;
+
+    // Movie catalog
+    catalogs.push({
+      id: `tmdb_${serviceId}_movie_${country}`,
+      type: 'movie',
+      name: `${service.name} Movies (${country.toUpperCase()})`,
+    });
+
+    // TV catalog
+    catalogs.push({
+      id: `tmdb_${serviceId}_series_${country}`,
+      type: 'series',
+      name: `${service.name} TV (${country.toUpperCase()})`,
+    });
+  }
+
+  return catalogs;
+}
+
+/**
+ * Fetch a streaming service catalog.
+ *
+ * @param {string} catalogId - Catalog ID (e.g. 'tmdb_netflix_movie_us')
+ * @param {string} type - 'movie' or 'series'
+ * @param {string} apiKey - TMDB API key
+ * @param {number} skip - Pagination skip
+ * @returns {Promise<StremioMeta[]>}
+ */
+export async function getStreamingCatalog(catalogId, type, apiKey, skip = 0) {
+  if (!apiKey) return [];
+
+  // Parse catalog ID: tmdb_<service>_<type>_<country>
+  const match = catalogId.match(/^tmdb_(\w+)_(movie|series)_([a-z]{2})$/);
+  if (!match) {
+    logger.warn(`[TMDB Streaming] Invalid catalog ID: ${catalogId}`);
+    return [];
+  }
+
+  const [, serviceId, catalogType, country] = match;
+  const service = StreamingServices[serviceId];
+
+  if (!service) {
+    logger.warn(`[TMDB Streaming] Unknown service: ${serviceId}`);
+    return [];
+  }
+
+  const cacheKey = `tmdb-streaming:${catalogId}:${skip}`;
 
   return cacheWrap(cacheKey, async () => {
     try {
       const page = Math.floor(skip / 20) + 1;
-      const results = await fetchList(catalog.endpoint, apiKey, page);
-      return results.map(item => toStremioMeta(item, catalog.type));
+      const endpoint = catalogType === 'series' ? 'tv' : 'movie';
+
+      const { data } = await axios.get(`${TMDB_BASE}/discover/${endpoint}`, {
+        timeout: REQUEST_TIMEOUT,
+        params: {
+          api_key: apiKey,
+          page,
+          with_watch_providers: service.id,
+          watch_region: country,
+          sort_by: 'popularity.desc',
+        },
+      });
+
+      return (data.results || []).map(item => toStremioMeta(item, catalogType));
     } catch (err) {
-      logger.warn(`[TMDB Catalog] ${err.message}`);
+      logger.warn(`[TMDB Streaming] ${err.message}`);
       return [];
     }
   }, CACHE_TTL_LIST);
-}
-
-/**
- * Fetch a list from TMDB API.
- */
-async function fetchList(endpoint, apiKey, page = 1) {
-  const { data } = await axios.get(`${TMDB_BASE}/${endpoint}`, {
-    timeout: REQUEST_TIMEOUT,
-    params: { api_key: apiKey, page },
-  });
-
-  return data.results || [];
 }
 
 /**
@@ -122,17 +143,13 @@ function toStremioMeta(item, type) {
   const rating = item.vote_average ? String(Math.round(item.vote_average * 10) / 10) : '';
 
   const meta = {
-    id: `tt${item.external_ids?.imdb_id || ''}`.replace('tttt', 'tt'),
+    id: item.id ? `tmdb:${type}:${item.id}` : '',
     type,
     name: title,
   };
 
-  // Try to get IMDb ID from external IDs if available
   if (item.external_ids?.imdb_id) {
     meta.id = item.external_ids.imdb_id;
-  } else if (item.id) {
-    // Fallback: use TMDB ID with prefix
-    meta.id = `tmdb:${type}:${item.id}`;
   }
 
   if (item.poster_path) {

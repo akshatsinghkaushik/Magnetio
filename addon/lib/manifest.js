@@ -1,5 +1,6 @@
 import { getManifestOverride } from './configuration.js';
 import { MochOptions } from '../moch/options.js';
+import { getStreamingCatalogs } from './tmdbCatalog.js';
 
 const ADDON_ID      = 'com.magnetio.addon';
 const ADDON_VERSION = '1.1.5';
@@ -97,19 +98,8 @@ function getCatalogs(config) {
     ];
   });
 
-  // TMDB default catalogs (trending, popular, top rated, now playing)
-  const tmdbCatalogs = (config?.tmdbApiKey && config.tmdbCatalogsEnabled !== false)
-    ? [
-        { id: 'tmdb_trending_movie', type: 'movie', name: 'TMDB - Trending Movies' },
-        { id: 'tmdb_trending_tv',    type: 'series', name: 'TMDB - Trending TV' },
-        { id: 'tmdb_popular_movie',  type: 'movie', name: 'TMDB - Popular Movies' },
-        { id: 'tmdb_popular_tv',     type: 'series', name: 'TMDB - Popular TV' },
-        { id: 'tmdb_top_rated_movie', type: 'movie', name: 'TMDB - Top Rated Movies' },
-        { id: 'tmdb_top_rated_tv',    type: 'series', name: 'TMDB - Top Rated TV' },
-        { id: 'tmdb_now_playing',    type: 'movie', name: 'TMDB - Now Playing' },
-        { id: 'tmdb_on_tv',          type: 'series', name: 'TMDB - On TV' },
-      ]
-    : [];
+  // TMDB streaming service catalogs (What to Watch style)
+  const streamingCatalogs = getStreamingCatalogs(config);
 
   // Similar content recommendations (requires genre param)
   const similarCatalogs = config?.tmdbApiKey
@@ -129,7 +119,7 @@ function getCatalogs(config) {
       ]
     : [];
 
-  return [...debridCatalogs, ...tmdbCatalogs, ...similarCatalogs];
+  return [...debridCatalogs, ...streamingCatalogs, ...similarCatalogs];
 }
 
 function getResources() {
