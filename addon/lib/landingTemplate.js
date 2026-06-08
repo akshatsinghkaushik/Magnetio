@@ -1134,7 +1134,7 @@ export function landingTemplate(manifest, initialConfig = {}) {
         </div>
       </div>
       <p style="font-size:0.75rem;color:var(--text-muted);margin-top:12px;">
-        Note: Hulu, Max, Peacock, and Paramount+ are US-only. Country selection applies to Netflix, Prime Video, Disney+, and Apple TV+.
+        Note: Hulu and Peacock are US-only. Country selection applies to Netflix, Prime Video, Disney+, Max, Apple TV+, and Paramount+.
       </p>
     </div>
 

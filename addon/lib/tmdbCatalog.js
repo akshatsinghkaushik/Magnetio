@@ -18,18 +18,18 @@ const REQUEST_TIMEOUT = 8000;
  * Streaming services with their TMDB watch provider IDs.
  * https://api.themoviedb.org/3/watch/providers
  *
- * multiCountry: true = user can select country (Netflix, Prime, Disney+, Apple TV+)
- *               false = US only (Hulu, Max, Peacock, Paramount+)
+ * multiCountry: true = user can select country (Netflix, Prime, Disney+, Max, Apple TV+, Paramount+)
+ *               false = US only (Hulu, Peacock) - same as watchnow.sliplane.app
  */
 export const StreamingServices = {
   netflix:   { id: 8,   name: 'Netflix',   multiCountry: true },
   prime:     { id: 9,   name: 'Prime Video', multiCountry: true },
   disney:    { id: 337, name: 'Disney+',   multiCountry: true },
   hulu:      { id: 15,  name: 'Hulu',      multiCountry: false },
-  max:       { id: 384, name: 'Max',       multiCountry: false },
+  max:       { id: 384, name: 'Max',       multiCountry: true },
   apple:     { id: 2,   name: 'Apple TV+', multiCountry: true },
   peacock:   { id: 386, name: 'Peacock',   multiCountry: false },
-  paramount: { id: 531, name: 'Paramount+', multiCountry: false },
+  paramount: { id: 531, name: 'Paramount+', multiCountry: true },
 };
 
 /**
