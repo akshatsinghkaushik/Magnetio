@@ -147,7 +147,7 @@ export async function getStreamingCatalog(catalogId, type, apiKey, rpdbApiKey, s
           api_key: apiKey,
           page,
           with_watch_providers: service.id,
-          watch_region: country,
+          watch_region: country.toUpperCase(),
           sort_by: 'popularity.desc',
         },
       });
