@@ -160,6 +160,9 @@ export function parseConfiguration(configString) {
       case 'rpdb':
         config.rpdbApiKey = value;
         break;
+      case 'omdb':
+        config.omdbApiKey = value;
+        break;
       case 'streamingservices':
         config.streamingServices = value.split(',').filter(Boolean);
         break;
@@ -218,6 +221,8 @@ export function getDefaultConfiguration() {
     tmdbCatalogsEnabled:     false,      // Master switch for all TMDB catalogs
     // RPDB (Rating Poster Database) - posters with rating badges
     rpdbApiKey:              null,
+    // OMDB API - for reliable IMDb ID lookup (used by RPDB for posters)
+    omdbApiKey:              null,
     // Streaming service catalogs (What to Watch style)
     streamingServices:       [],         // Selected services: netflix, prime, disney, hulu, max, apple, peacock, paramount
     streamingCountry:        'us',       // Single country for all services (defaults to US)

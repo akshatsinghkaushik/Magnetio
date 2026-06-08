@@ -95,7 +95,7 @@ export async function getAddonInterface(config) {
         }
         const catalogType = idMatch[1]; // Use type from ID, not from request
         const skip = extra?.skip ? parseInt(extra.skip, 10) : 0;
-        const metas = await getStreamingCatalog(id, catalogType, config.tmdbApiKey, config.rpdbApiKey, skip);
+        const metas = await getStreamingCatalog(id, catalogType, config.tmdbApiKey, config.rpdbApiKey, config.omdbApiKey, skip);
         return {
           metas,
           cacheMaxAge: metas.length ? 3600 : CACHE_TTL_EMPTY,

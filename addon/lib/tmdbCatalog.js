@@ -116,7 +116,7 @@ export function getStreamingCatalogs(config) {
  * @param {number} skip - Pagination skip
  * @returns {Promise<StremioMeta[]>}
  */
-export async function getStreamingCatalog(catalogId, type, apiKey, rpdbApiKey, skip = 0) {
+export async function getStreamingCatalog(catalogId, type, apiKey, rpdbApiKey, omdbApiKey, skip = 0) {
   if (!apiKey) return [];
 
   // Parse catalog ID: tmdb_<service>_<type>_<country>
@@ -162,7 +162,9 @@ export async function getStreamingCatalog(catalogId, type, apiKey, rpdbApiKey, s
       // Enrich with external IDs for RPDB posters (skip if no RPDB key)
       let results = data.results;
       if (rpdbApiKey) {
-        results = await Promise.all((data.results || []).map(item => enrichWithExternalIds(item, endpoint, apiKey)));
+        results = await Promise.all((data.results || []).map(item =>
+          enrichWithExternalIds(item, endpoint, apiKey, omdbApiKey)
+        ));
       }
 
       return results.map(item => toStremioMeta(item, catalogType, rpdbApiKey));
@@ -175,14 +177,16 @@ export async function getStreamingCatalog(catalogId, type, apiKey, rpdbApiKey, s
 
 /**
  * Enrich a TMDB item with external IDs (IMDb) for RPDB poster lookup.
+ * Uses TMDB external_ids API first, then falls back to OMDB if configured.
  */
-async function enrichWithExternalIds(item, endpoint, apiKey) {
+async function enrichWithExternalIds(item, endpoint, apiKey, omdbApiKey) {
   // Skip if already has external_ids
   if (item.external_ids?.imdb_id) return item;
 
   const cacheKey = `tmdb-external:${endpoint}:${item.id}`;
 
   try {
+    // Try TMDB first
     const externalData = await cacheWrap(cacheKey, async () => {
       const { data } = await axios.get(`${TMDB_BASE}/${endpoint}/${item.id}/external_ids`, {
         timeout: REQUEST_TIMEOUT,
@@ -191,9 +195,46 @@ async function enrichWithExternalIds(item, endpoint, apiKey) {
       return data;
     }, CACHE_TTL_RPDB);
 
-    return { ...item, external_ids: { imdb_id: externalData.imdb_id } };
+    if (externalData.imdb_id) {
+      return { ...item, external_ids: { imdb_id: externalData.imdb_id } };
+    }
+
+    // Fallback to OMDB if TMDB didn't return IMDb ID
+    if (omdbApiKey) {
+      const omdbData = await getOMDBByTitle(item.title || item.name, endpoint, apiKey, omdbApiKey);
+      if (omdbData?.imdbID) {
+        return { ...item, external_ids: { imdb_id: omdbData.imdbID } };
+      }
+    }
+
+    return item;
   } catch {
     return item;
+  }
+}
+
+/**
+ * Fetch IMDb ID from OMDB API by title.
+ */
+async function getOMDBByTitle(title, type, tmdbApiKey, omdbApiKey) {
+  if (!omdbApiKey || !title) return null;
+
+  const cacheKey = `omdb-title:${type}:${title}`;
+
+  try {
+    return await cacheWrap(cacheKey, async () => {
+      const { data } = await axios.get('https://www.omdbapi.com/', {
+        timeout: REQUEST_TIMEOUT,
+        params: {
+          t: title,
+          type: type === 'tv' ? 'series' : 'movie',
+          apikey: omdbApiKey,
+        },
+      });
+      return data.Response === 'True' ? data : null;
+    }, CACHE_TTL_RPDB);
+  } catch {
+    return null;
   }
 }
 

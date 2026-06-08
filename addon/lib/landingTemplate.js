@@ -85,6 +85,7 @@ export function landingTemplate(manifest, initialConfig = {}) {
     tmdbApiKey: initialConfig.tmdbApiKey ?? '',
     tmdbCatalogsEnabled: initialConfig.tmdbCatalogsEnabled ?? false,
     rpdbApiKey: initialConfig.rpdbApiKey ?? '',
+    omdbApiKey: initialConfig.omdbApiKey ?? '',
     streamingServices: initialConfig.streamingServices ?? [],
     streamingCountry: initialConfig.streamingCountry ?? 'us',
     torznabUrl: initialConfig.torznabUrl ?? '',
@@ -1124,6 +1125,18 @@ export function landingTemplate(manifest, initialConfig = {}) {
           </div>
         </label>
       </div>
+      <div class="field-grid" style="margin-top:16px;">
+        <label>
+          OMDB API Key (optional)
+          <div class="password-wrap">
+            <input type="password" id="omdb" autocomplete="off" placeholder="OMDB API key for reliable IMDb ID lookup" />
+            <button type="button" class="eye-toggle" data-target="omdb" title="Toggle visibility">${SVG_EYE}</button>
+          </div>
+        </label>
+      </div>
+      <p style="font-size:0.75rem;color:var(--text-muted);margin-top:12px;">
+        OMDB API ensures all items can resolve IMDb IDs for RPDB rating posters. Get a free key at <a href="https://www.omdbapi.com/apikey.aspx" target="_blank" rel="noreferrer">omdbapi.com</a>.
+      </p>
     </div>
 
     <div class="config-card">
@@ -1320,6 +1333,7 @@ export function landingTemplate(manifest, initialConfig = {}) {
 
       document.getElementById('tmdb').value = initialConfig.tmdbApiKey || '';
       document.getElementById('rpdb').value = initialConfig.rpdbApiKey || '';
+      document.getElementById('omdb').value = initialConfig.omdbApiKey || '';
 
       // Streaming services checkboxes
       setChipGrid('streamingServices', initialConfig.streamingServices || []);
@@ -1367,6 +1381,9 @@ export function landingTemplate(manifest, initialConfig = {}) {
 
       var rpdbKey = document.getElementById('rpdb').value.trim();
       if (rpdbKey) parts.push('rpdb=' + rpdbKey);
+
+      var omdbKey = document.getElementById('omdb').value.trim();
+      if (omdbKey) parts.push('omdb=' + omdbKey);
 
       // Streaming services
       var services = selectedValues('streamingServices');
