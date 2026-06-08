@@ -87,12 +87,15 @@ export async function getAddonInterface(config) {
   builder.defineCatalogHandler(async ({ type, id, extra }) => {
     try {
       // TMDB streaming service catalogs (What to Watch style: tmdb_netflix_movie_us)
-      if (id.startsWith('tmdb_') && id.match(/^tmdb_\w+_(movie|series)_[a-z]{2}$/)) {
+      // Extract type from catalog ID (e.g., tmdb_netflix_movie_au -> movie)
+      const idMatch = id.match(/^tmdb_\w+_(movie|series)_[a-z]{2}$/);
+      if (id.startsWith('tmdb_') && idMatch) {
         if (!config.tmdbApiKey) {
           return { metas: [], cacheMaxAge: CACHE_TTL_EMPTY };
         }
+        const catalogType = idMatch[1]; // Use type from ID, not from request
         const skip = extra?.skip ? parseInt(extra.skip, 10) : 0;
-        const metas = await getStreamingCatalog(id, type, config.tmdbApiKey, config.rpdbApiKey, skip);
+        const metas = await getStreamingCatalog(id, catalogType, config.tmdbApiKey, config.rpdbApiKey, skip);
         return {
           metas,
           cacheMaxAge: metas.length ? 3600 : CACHE_TTL_EMPTY,
