@@ -92,7 +92,7 @@ export async function getAddonInterface(config) {
           return { metas: [], cacheMaxAge: CACHE_TTL_EMPTY };
         }
         const skip = extra?.skip ? parseInt(extra.skip, 10) : 0;
-        const metas = await getStreamingCatalog(id, type, config.tmdbApiKey, skip);
+        const metas = await getStreamingCatalog(id, type, config.tmdbApiKey, config.rpdbApiKey, skip);
         return {
           metas,
           cacheMaxAge: metas.length ? 3600 : CACHE_TTL_EMPTY,

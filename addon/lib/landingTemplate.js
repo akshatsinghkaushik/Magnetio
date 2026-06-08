@@ -84,6 +84,7 @@ export function landingTemplate(manifest, initialConfig = {}) {
     prewarmLimit: initialConfig.prewarmLimit ?? 3,
     tmdbApiKey: initialConfig.tmdbApiKey ?? '',
     tmdbCatalogsEnabled: initialConfig.tmdbCatalogsEnabled ?? false,
+    rpdbApiKey: initialConfig.rpdbApiKey ?? '',
     streamingServices: initialConfig.streamingServices ?? [],
     streamingCountry: initialConfig.streamingCountry ?? 'us',
     torznabUrl: initialConfig.torznabUrl ?? '',
@@ -1105,8 +1106,8 @@ export function landingTemplate(manifest, initialConfig = {}) {
     </div>
 
     <div class="config-card">
-      <div class="config-card-title">Streaming Catalogs</div>
-      <div class="config-card-desc">Browse movies and TV shows available on your streaming services. Like "What to Watch" – select services and a country to generate catalogs. Requires TMDB API key.</div>
+      <div class="config-card-title">TMDB</div>
+      <div class="config-card-desc">TMDB API key enables streaming service catalogs. Get a free API key at <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer">themoviedb.org</a>.</div>
       <div class="field-grid">
         <label>
           TMDB API Key
@@ -1115,6 +1116,20 @@ export function landingTemplate(manifest, initialConfig = {}) {
             <button type="button" class="eye-toggle" data-target="tmdb" title="Toggle visibility">${SVG_EYE}</button>
           </div>
         </label>
+        <label>
+          RPDB API Key (optional)
+          <div class="password-wrap">
+            <input type="password" id="rpdb" autocomplete="off" placeholder="RPDB API key for rating posters" />
+            <button type="button" class="eye-toggle" data-target="rpdb" title="Toggle visibility">${SVG_EYE}</button>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div class="config-card">
+      <div class="config-card-title">Streaming Catalogs</div>
+      <div class="config-card-desc">Browse movies and TV shows available on your streaming services. Like "What to Watch" – select services and a country to generate catalogs.</div>
+      <div class="field-grid">
         <label>
           Country
           <select id="streamingCountry">
@@ -1304,15 +1319,13 @@ export function landingTemplate(manifest, initialConfig = {}) {
       setChipGrid('subtitleLanguages', initialConfig.subtitleLanguages || ['en']);
 
       document.getElementById('tmdb').value = initialConfig.tmdbApiKey || '';
+      document.getElementById('rpdb').value = initialConfig.rpdbApiKey || '';
 
       // Streaming services checkboxes
       setChipGrid('streamingServices', initialConfig.streamingServices || []);
 
-      // Single country dropdown (use first service's country or default to US)
-      var firstCountry = initialConfig.streamingCountries && initialConfig.streamingServices && initialConfig.streamingServices.length
-        ? (initialConfig.streamingCountries[initialConfig.streamingServices[0]] || 'us')
-        : 'us';
-      document.getElementById('streamingCountry').value = initialConfig.streamingCountry || firstCountry;
+      // Single country dropdown (default to US)
+      document.getElementById('streamingCountry').value = initialConfig.streamingCountry || 'us';
 
       document.getElementById('torznabUrl').value = initialConfig.torznabUrl || '';
       document.getElementById('torznabKey').value = initialConfig.torznabApiKey || '';
@@ -1351,6 +1364,9 @@ export function landingTemplate(manifest, initialConfig = {}) {
 
       var tmdbKey = document.getElementById('tmdb').value.trim();
       if (tmdbKey) parts.push('tmdb=' + tmdbKey);
+
+      var rpdbKey = document.getElementById('rpdb').value.trim();
+      if (rpdbKey) parts.push('rpdb=' + rpdbKey);
 
       // Streaming services
       var services = selectedValues('streamingServices');

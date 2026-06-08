@@ -12,7 +12,29 @@ const POSTER_BASE = 'https://image.tmdb.org/t/p/w500';
 const BACKDROP_BASE = 'https://image.tmdb.org/t/p/w780';
 
 const CACHE_TTL_LIST = 3600;        // 1 hour for catalog lists
+const CACHE_TTL_RPDB = 86400;       // 24 hours for RPDB poster lookups
 const REQUEST_TIMEOUT = 8000;
+
+/**
+ * Build RPDB poster URL with rating badge.
+ * Falls back to TMDB poster if RPDB is not configured.
+ */
+function buildPosterUrl(item, tmdbApiKey, rpdbApiKey, type) {
+  const imdbId = item.external_ids?.imdb_id;
+
+  // Try RPDB first if API key and IMDb ID available
+  if (rpdbApiKey && imdbId) {
+    const mediaType = type === 'series' ? 'series' : 'movie';
+    return `https://api.ratingposterdb.com/${rpdbApiKey}/${mediaType}/poster-default/${imdbId}.jpg`;
+  }
+
+  // Fallback to TMDB
+  if (item.poster_path) {
+    return `${POSTER_BASE}${item.poster_path}`;
+  }
+
+  return null;
+}
 
 /**
  * Streaming services with their TMDB watch provider IDs.
@@ -90,10 +112,11 @@ export function getStreamingCatalogs(config) {
  * @param {string} catalogId - Catalog ID (e.g. 'tmdb_netflix_movie_us')
  * @param {string} type - 'movie' or 'series'
  * @param {string} apiKey - TMDB API key
+ * @param {string} rpdbApiKey - RPDB API key (optional, for rating posters)
  * @param {number} skip - Pagination skip
  * @returns {Promise<StremioMeta[]>}
  */
-export async function getStreamingCatalog(catalogId, type, apiKey, skip = 0) {
+export async function getStreamingCatalog(catalogId, type, apiKey, rpdbApiKey, skip = 0) {
   if (!apiKey) return [];
 
   // Parse catalog ID: tmdb_<service>_<type>_<country>
@@ -129,7 +152,12 @@ export async function getStreamingCatalog(catalogId, type, apiKey, skip = 0) {
         },
       });
 
-      return (data.results || []).map(item => toStremioMeta(item, catalogType));
+      // Enrich with external IDs for RPDB posters
+      const enriched = rpdbApiKey
+        ? await Promise.all((data.results || []).map(item => enrichWithExternalIds(item, endpoint, apiKey)))
+        : (data.results || []);
+
+      return enriched.map(item => toStremioMeta(item, catalogType, rpdbApiKey));
     } catch (err) {
       logger.warn(`[TMDB Streaming] ${err.message}`);
       return [];
@@ -138,25 +166,51 @@ export async function getStreamingCatalog(catalogId, type, apiKey, skip = 0) {
 }
 
 /**
- * Convert a TMDB result to Stremio meta format.
+ * Enrich a TMDB item with external IDs (IMDb) for RPDB poster lookup.
  */
-function toStremioMeta(item, type) {
+async function enrichWithExternalIds(item, endpoint, apiKey) {
+  // Skip if already has external_ids
+  if (item.external_ids?.imdb_id) return item;
+
+  const cacheKey = `tmdb-external:${endpoint}:${item.id}`;
+
+  try {
+    const externalData = await cacheWrap(cacheKey, async () => {
+      const { data } = await axios.get(`${TMDB_BASE}/${endpoint}/${item.id}/external_ids`, {
+        timeout: REQUEST_TIMEOUT,
+        params: { api_key: apiKey },
+      });
+      return data;
+    }, CACHE_TTL_RPDB);
+
+    return { ...item, external_ids: { imdb_id: externalData.imdb_id } };
+  } catch {
+    return item;
+  }
+}
+
+/**
+ * Convert a TMDB result to Stremio meta format.
+ * Uses RPDB poster if API key is provided and IMDb ID is available.
+ */
+function toStremioMeta(item, type, rpdbApiKey) {
   const title = item.title || item.name || '';
   const releaseDate = item.release_date || item.first_air_date || '';
   const year = releaseDate ? releaseDate.substring(0, 4) : '';
   const rating = item.vote_average ? String(Math.round(item.vote_average * 10) / 10) : '';
+  const imdbId = item.external_ids?.imdb_id;
 
   const meta = {
-    id: item.id ? `tmdb:${type}:${item.id}` : '',
+    id: imdbId || (item.id ? `tmdb:${type}:${item.id}` : ''),
     type,
     name: title,
   };
 
-  if (item.external_ids?.imdb_id) {
-    meta.id = item.external_ids.imdb_id;
-  }
-
-  if (item.poster_path) {
+  // RPDB poster with rating badge (priority)
+  if (rpdbApiKey && imdbId) {
+    meta.poster = `https://api.ratingposterdb.com/${rpdbApiKey}/${type}/poster-default/${imdbId}.jpg`;
+  } else if (item.poster_path) {
+    // Fallback to TMDB poster
     meta.poster = `${POSTER_BASE}${item.poster_path}`;
   }
 

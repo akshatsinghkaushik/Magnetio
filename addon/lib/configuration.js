@@ -157,6 +157,9 @@ export function parseConfiguration(configString) {
       case 'tmdb':
         config.tmdbApiKey = value;
         break;
+      case 'rpdb':
+        config.rpdbApiKey = value;
+        break;
       case 'streamingservices':
         config.streamingServices = value.split(',').filter(Boolean);
         break;
@@ -213,6 +216,8 @@ export function getDefaultConfiguration() {
     // Recommendations (TMDB) - What to Watch style catalogs
     tmdbApiKey:              null,
     tmdbCatalogsEnabled:     false,      // Master switch for all TMDB catalogs
+    // RPDB (Rating Poster Database) - posters with rating badges
+    rpdbApiKey:              null,
     // Streaming service catalogs (What to Watch style)
     streamingServices:       [],         // Selected services: netflix, prime, disney, hulu, max, apple, peacock, paramount
     streamingCountry:        'us',       // Single country for all services (defaults to US)
