@@ -8,7 +8,7 @@ import { toStreamInfo } from './lib/streamInfo.js';
 import { getSubtitles } from './lib/subtitles.js';
 import { toStaticStream } from './moch/static.js';
 import { getSimilarContent } from './lib/similar.js';
-import { getStreamingCatalog, getTmdbCatalog } from './lib/tmdbCatalog.js';
+import { getStreamingCatalog } from './lib/tmdbCatalog.js';
 import NamedQueue from './lib/namedQueue.js';
 import pLimit from 'p-limit';
 import { logger } from './lib/logger.js';
