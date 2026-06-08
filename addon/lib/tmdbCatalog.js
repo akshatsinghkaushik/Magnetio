@@ -152,14 +152,22 @@ export async function getStreamingCatalog(catalogId, type, apiKey, rpdbApiKey, s
         },
       });
 
-      // Enrich with external IDs for RPDB posters
-      const enriched = rpdbApiKey
-        ? await Promise.all((data.results || []).map(item => enrichWithExternalIds(item, endpoint, apiKey)))
-        : (data.results || []);
+      if (!data.results || data.results.length === 0) {
+        logger.info(`[TMDB Streaming] No results for ${catalogId}`);
+        return [];
+      }
 
-      return enriched.map(item => toStremioMeta(item, catalogType, rpdbApiKey));
+      logger.info(`[TMDB Streaming] Got ${data.results.length} results for ${catalogId}`);
+
+      // Enrich with external IDs for RPDB posters (skip if no RPDB key)
+      let results = data.results;
+      if (rpdbApiKey) {
+        results = await Promise.all((data.results || []).map(item => enrichWithExternalIds(item, endpoint, apiKey)));
+      }
+
+      return results.map(item => toStremioMeta(item, catalogType, rpdbApiKey));
     } catch (err) {
-      logger.warn(`[TMDB Streaming] ${err.message}`);
+      logger.error(`[TMDB Streaming] Error for ${catalogId}: ${err.message} - ${err.response?.status}`);
       return [];
     }
   }, CACHE_TTL_LIST);
