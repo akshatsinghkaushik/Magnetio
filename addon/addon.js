@@ -8,6 +8,7 @@ import { toStreamInfo } from './lib/streamInfo.js';
 import { getSubtitles } from './lib/subtitles.js';
 import { toStaticStream } from './moch/static.js';
 import { getSimilarContent } from './lib/similar.js';
+import { getTmdbCatalog } from './lib/tmdbCatalog.js';
 import NamedQueue from './lib/namedQueue.js';
 import pLimit from 'p-limit';
 import { logger } from './lib/logger.js';
@@ -85,6 +86,19 @@ export async function getAddonInterface(config) {
   // ─── CATALOG HANDLER ───────────────────────────────────────────────────────
   builder.defineCatalogHandler(async ({ type, id, extra }) => {
     try {
+      // TMDB default catalogs (trending, popular, top rated, now playing)
+      if (id.startsWith('tmdb_')) {
+        if (!config.tmdbApiKey) {
+          return { metas: [], cacheMaxAge: CACHE_TTL_EMPTY };
+        }
+        const skip = extra?.skip ? parseInt(extra.skip, 10) : 0;
+        const metas = await getTmdbCatalog(id, type, config.tmdbApiKey, skip);
+        return {
+          metas,
+          cacheMaxAge: metas.length ? 3600 : CACHE_TTL_EMPTY,
+        };
+      }
+
       // Similar content recommendations (TMDB)
       if (id.startsWith('magnetio_similar_')) {
         const imdbId = extra?.genre || null;

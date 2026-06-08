@@ -61,6 +61,7 @@ export function landingTemplate(manifest, initialConfig = {}) {
     prewarmDebrid: initialConfig.prewarmDebrid ?? true,
     prewarmLimit: initialConfig.prewarmLimit ?? 3,
     tmdbApiKey: initialConfig.tmdbApiKey ?? '',
+    tmdbCatalogsEnabled: initialConfig.tmdbCatalogsEnabled ?? true,
     torznabUrl: initialConfig.torznabUrl ?? '',
     torznabApiKey: initialConfig.torznabApiKey ?? '',
     realDebridApiKey: initialConfig.realDebridApiKey ?? '',
@@ -1080,8 +1081,8 @@ export function landingTemplate(manifest, initialConfig = {}) {
     </div>
 
     <div class="config-card">
-      <div class="config-card-title">Recommendations</div>
-      <div class="config-card-desc">Enable "More Like This" suggestions powered by TMDB. Get a free API key at <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer">themoviedb.org</a>.</div>
+      <div class="config-card-title">TMDB</div>
+      <div class="config-card-desc">TMDB API key enables catalog browsing (trending, popular, top rated) and "More Like This" suggestions. Get a free API key at <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer">themoviedb.org</a>.</div>
       <div class="field-grid">
         <label>
           TMDB API Key
@@ -1089,6 +1090,10 @@ export function landingTemplate(manifest, initialConfig = {}) {
             <input type="password" id="tmdb" autocomplete="off" placeholder="TMDB API key (v3 auth)" />
             <button type="button" class="eye-toggle" data-target="tmdb" title="Toggle visibility">${SVG_EYE}</button>
           </div>
+        </label>
+        <label style="margin-top:8px;display:flex;align-items:center;gap:6px;font-size:0.75rem;color:var(--text-secondary);cursor:pointer;">
+          <input type="checkbox" id="tmdbCatalogs" style="width:auto;margin:0;" />
+          <span>Show default catalogs (Trending, Popular, Top Rated, Now Playing)</span>
         </label>
       </div>
     </div>
@@ -1259,6 +1264,7 @@ export function landingTemplate(manifest, initialConfig = {}) {
       setChipGrid('subtitleLanguages', initialConfig.subtitleLanguages || ['en']);
 
       document.getElementById('tmdb').value = initialConfig.tmdbApiKey || '';
+      document.getElementById('tmdbCatalogs').checked = initialConfig.tmdbCatalogsEnabled !== false;
 
       document.getElementById('torznabUrl').value = initialConfig.torznabUrl || '';
       document.getElementById('torznabKey').value = initialConfig.torznabApiKey || '';
@@ -1297,6 +1303,9 @@ export function landingTemplate(manifest, initialConfig = {}) {
 
       var tmdbKey = document.getElementById('tmdb').value.trim();
       if (tmdbKey) parts.push('tmdb=' + tmdbKey);
+
+      // TMDB catalogs flag (only include if disabled, since default is true)
+      if (!document.getElementById('tmdbCatalogs').checked) parts.push('tmdbcatalogs=0');
 
       var torznabUrl = document.getElementById('torznabUrl').value.trim();
       var torznabKey = document.getElementById('torznabKey').value.trim();

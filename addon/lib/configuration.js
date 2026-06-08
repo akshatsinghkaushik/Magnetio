@@ -157,6 +157,9 @@ export function parseConfiguration(configString) {
       case 'tmdb':
         config.tmdbApiKey = value;
         break;
+      case 'tmdbcatalogs':
+        config.tmdbCatalogsEnabled = parseBoolean(value, true);
+        break;
       case 'torznaburl':
         try { config.torznabUrl = decodeURIComponent(value); }
         catch { config.torznabUrl = value; }
@@ -206,6 +209,7 @@ export function getDefaultConfiguration() {
     maxSize:            null,
     // Recommendations (TMDB)
     tmdbApiKey:         null,
+    tmdbCatalogsEnabled: true,      // Enable default TMDB catalogs (trending, popular, etc.)
     // Torznab (Jackett / Prowlarr)
     torznabUrl:         null,
     torznabApiKey:      null,

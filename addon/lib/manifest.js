@@ -97,6 +97,21 @@ function getCatalogs(config) {
     ];
   });
 
+  // TMDB default catalogs (trending, popular, top rated, now playing)
+  const tmdbCatalogs = (config?.tmdbApiKey && config.tmdbCatalogsEnabled !== false)
+    ? [
+        { id: 'tmdb_trending_movie', type: 'movie', name: 'TMDB - Trending Movies' },
+        { id: 'tmdb_trending_tv',    type: 'series', name: 'TMDB - Trending TV' },
+        { id: 'tmdb_popular_movie',  type: 'movie', name: 'TMDB - Popular Movies' },
+        { id: 'tmdb_popular_tv',     type: 'series', name: 'TMDB - Popular TV' },
+        { id: 'tmdb_top_rated_movie', type: 'movie', name: 'TMDB - Top Rated Movies' },
+        { id: 'tmdb_top_rated_tv',    type: 'series', name: 'TMDB - Top Rated TV' },
+        { id: 'tmdb_now_playing',    type: 'movie', name: 'TMDB - Now Playing' },
+        { id: 'tmdb_on_tv',          type: 'series', name: 'TMDB - On TV' },
+      ]
+    : [];
+
+  // Similar content recommendations (requires genre param)
   const similarCatalogs = config?.tmdbApiKey
     ? [
         {
@@ -114,7 +129,7 @@ function getCatalogs(config) {
       ]
     : [];
 
-  return [...debridCatalogs, ...similarCatalogs];
+  return [...debridCatalogs, ...tmdbCatalogs, ...similarCatalogs];
 }
 
 function getResources() {
@@ -132,12 +147,12 @@ function getResources() {
     {
       name: 'catalog',
       types: ['movie', 'series'],
-      idPrefixes: ['rd', 'pm', 'ad', 'dl', 'ed', 'oc', 'tb', 'pu', 'magnetio_similar'],
+      idPrefixes: ['rd', 'pm', 'ad', 'dl', 'ed', 'oc', 'tb', 'pu', 'magnetio_similar', 'tmdb'],
     },
     {
       name: 'meta',
       types: ['movie', 'series'],
-      idPrefixes: ['rd', 'pm', 'ad', 'dl', 'ed', 'oc', 'tb', 'pu'],
+      idPrefixes: ['rd', 'pm', 'ad', 'dl', 'ed', 'oc', 'tb', 'pu', 'tmdb'],
     },
   ];
 }
