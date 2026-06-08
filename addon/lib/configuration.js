@@ -222,12 +222,12 @@ export function getDefaultConfiguration() {
     offcloudApiKey:        null,
     torboxApiKey:          null,
     putioApiKey:           null,
-    // Catalog enable flags (true = show catalog if API key is set)
-    realDebridCatalogEnabled:  true,
-    premiumizeCatalogEnabled:  true,
-    debridLinkCatalogEnabled:  true,
-    torboxCatalogEnabled:      true,
-    putioCatalogEnabled:       true,
+    // Catalog enable flags (false = hide catalog by default, user can enable)
+    realDebridCatalogEnabled:  false,
+    premiumizeCatalogEnabled:  false,
+    debridLinkCatalogEnabled:  false,
+    torboxCatalogEnabled:      false,
+    putioCatalogEnabled:       false,
   };
 }
 

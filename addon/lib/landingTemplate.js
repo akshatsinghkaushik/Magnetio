@@ -72,11 +72,11 @@ export function landingTemplate(manifest, initialConfig = {}) {
     offcloudApiKey: initialConfig.offcloudApiKey ?? '',
     torboxApiKey: initialConfig.torboxApiKey ?? '',
     putioApiKey: initialConfig.putioApiKey ?? '',
-    realDebridCatalogEnabled: initialConfig.realDebridCatalogEnabled ?? true,
-    premiumizeCatalogEnabled: initialConfig.premiumizeCatalogEnabled ?? true,
-    debridLinkCatalogEnabled: initialConfig.debridLinkCatalogEnabled ?? true,
-    torboxCatalogEnabled: initialConfig.torboxCatalogEnabled ?? true,
-    putioCatalogEnabled: initialConfig.putioCatalogEnabled ?? true,
+    realDebridCatalogEnabled: initialConfig.realDebridCatalogEnabled ?? false,
+    premiumizeCatalogEnabled: initialConfig.premiumizeCatalogEnabled ?? false,
+    debridLinkCatalogEnabled: initialConfig.debridLinkCatalogEnabled ?? false,
+    torboxCatalogEnabled: initialConfig.torboxCatalogEnabled ?? false,
+    putioCatalogEnabled: initialConfig.putioCatalogEnabled ?? false,
   });
 
   return `<!DOCTYPE html>
@@ -1278,12 +1278,12 @@ export function landingTemplate(manifest, initialConfig = {}) {
       document.getElementById('tb').value = initialConfig.torboxApiKey || '';
       document.getElementById('pu').value = initialConfig.putioApiKey || '';
 
-      // Catalog enable checkboxes (default true if not set)
-      document.getElementById('rdCatalog').checked = initialConfig.realDebridCatalogEnabled !== false;
-      document.getElementById('pmCatalog').checked = initialConfig.premiumizeCatalogEnabled !== false;
-      document.getElementById('dlCatalog').checked = initialConfig.debridLinkCatalogEnabled !== false;
-      document.getElementById('tbCatalog').checked = initialConfig.torboxCatalogEnabled !== false;
-      document.getElementById('puCatalog').checked = initialConfig.putioCatalogEnabled !== false;
+      // Catalog enable checkboxes (default false if not set)
+      document.getElementById('rdCatalog').checked = initialConfig.realDebridCatalogEnabled === true;
+      document.getElementById('pmCatalog').checked = initialConfig.premiumizeCatalogEnabled === true;
+      document.getElementById('dlCatalog').checked = initialConfig.debridLinkCatalogEnabled === true;
+      document.getElementById('tbCatalog').checked = initialConfig.torboxCatalogEnabled === true;
+      document.getElementById('puCatalog').checked = initialConfig.putioCatalogEnabled === true;
     }
 
     function buildConfiguration() {
@@ -1318,12 +1318,12 @@ export function landingTemplate(manifest, initialConfig = {}) {
         if (val) parts.push(id + '=' + val);
       });
 
-      // Catalog enable flags (only include if disabled, since default is true)
-      if (!document.getElementById('rdCatalog').checked) parts.push('rdcatalog=0');
-      if (!document.getElementById('pmCatalog').checked) parts.push('pmcatalog=0');
-      if (!document.getElementById('dlCatalog').checked) parts.push('dlcatalog=0');
-      if (!document.getElementById('tbCatalog').checked) parts.push('tbcatalog=0');
-      if (!document.getElementById('puCatalog').checked) parts.push('pucatalog=0');
+      // Catalog enable flags (only include if enabled, since default is false)
+      if (document.getElementById('rdCatalog').checked) parts.push('rdcatalog=1');
+      if (document.getElementById('pmCatalog').checked) parts.push('pmcatalog=1');
+      if (document.getElementById('dlCatalog').checked) parts.push('dlcatalog=1');
+      if (document.getElementById('tbCatalog').checked) parts.push('tbcatalog=1');
+      if (document.getElementById('puCatalog').checked) parts.push('pucatalog=1');
 
       return parts.join('|');
     }
