@@ -82,14 +82,20 @@ function getDescription(config) {
 }
 
 function getCatalogs(config) {
-  const debridCatalogs = getEnabledMochs(config).flatMap(moch =>
-    moch.hasCatalog
-      ? [
-          { id: `${moch.id}_movie`,  type: 'movie',  name: `${moch.name} - Movies`  },
-          { id: `${moch.id}_series`, type: 'series', name: `${moch.name} - Series` },
-        ]
-      : []
-  );
+  const enabledMochs = getEnabledMochs(config);
+  const debridCatalogs = enabledMochs.flatMap(moch => {
+    // Check if catalog is enabled for this service (if it has one)
+    const catalogEnabled = moch.catalogFlagKey
+      ? (config?.[moch.catalogFlagKey] !== false)
+      : true;
+
+    if (!moch.hasCatalog || !catalogEnabled) return [];
+
+    return [
+      { id: `${moch.id}_movie`,  type: 'movie',  name: `${moch.name} - Movies`  },
+      { id: `${moch.id}_series`, type: 'series', name: `${moch.name} - Series` },
+    ];
+  });
 
   const similarCatalogs = config?.tmdbApiKey
     ? [

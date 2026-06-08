@@ -25,14 +25,14 @@ const LANGUAGES = [
 ];
 
 const DEBRID_FIELDS = [
-  ['rd', 'Real-Debrid', 'https://real-debrid.com/apitoken'],
-  ['pm', 'Premiumize', 'https://www.premiumize.me/account'],
-  ['ad', 'AllDebrid', 'https://alldebrid.com/apikeys'],
-  ['dl', 'DebridLink', 'https://debrid-link.com/webapp/apikey'],
-  ['ed', 'EasyDebrid', 'https://easydebrid.com/settings'],
-  ['oc', 'Offcloud', 'https://offcloud.com/#/account'],
-  ['tb', 'TorBox', 'https://torbox.app/settings'],
-  ['pu', 'Put.io', 'https://put.io/oauth/apps'],
+  ['rd', 'Real-Debrid', 'https://real-debrid.com/apitoken', true],
+  ['pm', 'Premiumize', 'https://www.premiumize.me/account', true],
+  ['ad', 'AllDebrid', 'https://alldebrid.com/apikeys', false],
+  ['dl', 'DebridLink', 'https://debrid-link.com/webapp/apikey', true],
+  ['ed', 'EasyDebrid', 'https://easydebrid.com/settings', false],
+  ['oc', 'Offcloud', 'https://offcloud.com/#/account', false],
+  ['tb', 'TorBox', 'https://torbox.app/settings', true],
+  ['pu', 'Put.io', 'https://put.io/oauth/apps', true],
 ];
 
 const SVG_SUN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
@@ -71,6 +71,11 @@ export function landingTemplate(manifest, initialConfig = {}) {
     offcloudApiKey: initialConfig.offcloudApiKey ?? '',
     torboxApiKey: initialConfig.torboxApiKey ?? '',
     putioApiKey: initialConfig.putioApiKey ?? '',
+    realDebridCatalogEnabled: initialConfig.realDebridCatalogEnabled ?? true,
+    premiumizeCatalogEnabled: initialConfig.premiumizeCatalogEnabled ?? true,
+    debridLinkCatalogEnabled: initialConfig.debridLinkCatalogEnabled ?? true,
+    torboxCatalogEnabled: initialConfig.torboxCatalogEnabled ?? true,
+    putioCatalogEnabled: initialConfig.putioCatalogEnabled ?? true,
   });
 
   return `<!DOCTYPE html>
@@ -1130,14 +1135,22 @@ export function landingTemplate(manifest, initialConfig = {}) {
         </label>
       </div>
       <div class="field-grid">
-        ${DEBRID_FIELDS.map(([id, label, url]) => `
-          <label>
-            <a href="${url}" target="_blank" rel="noreferrer" style="color:var(--accent);text-decoration:none;">${label} <span style="font-size:0.65em;opacity:0.6;">&#8599;</span></a>
-            <div class="password-wrap">
-              <input type="password" id="${id}" autocomplete="off" placeholder="${label} API key" />
-              <button type="button" class="eye-toggle" data-target="${id}" title="Toggle visibility">${SVG_EYE}</button>
-            </div>
-          </label>
+        ${DEBRID_FIELDS.map(([id, label, url, hasCatalog]) => `
+          <div>
+            <label>
+              <a href="${url}" target="_blank" rel="noreferrer" style="color:var(--accent);text-decoration:none;">${label} <span style="font-size:0.65em;opacity:0.6;">&#8599;</span></a>
+              <div class="password-wrap">
+                <input type="password" id="${id}" autocomplete="off" placeholder="${label} API key" />
+                <button type="button" class="eye-toggle" data-target="${id}" title="Toggle visibility">${SVG_EYE}</button>
+              </div>
+            </label>
+            ${hasCatalog ? `
+            <label style="margin-top:8px;display:flex;align-items:center;gap:6px;font-size:0.75rem;color:var(--text-secondary);cursor:pointer;">
+              <input type="checkbox" id="${id}Catalog" style="width:auto;margin:0;" />
+              <span>Show catalog</span>
+            </label>
+            ` : ''}
+          </div>
         `).join('')}
       </div>
     </div>
@@ -1258,6 +1271,13 @@ export function landingTemplate(manifest, initialConfig = {}) {
       document.getElementById('oc').value = initialConfig.offcloudApiKey || '';
       document.getElementById('tb').value = initialConfig.torboxApiKey || '';
       document.getElementById('pu').value = initialConfig.putioApiKey || '';
+
+      // Catalog enable checkboxes (default true if not set)
+      document.getElementById('rdCatalog').checked = initialConfig.realDebridCatalogEnabled !== false;
+      document.getElementById('pmCatalog').checked = initialConfig.premiumizeCatalogEnabled !== false;
+      document.getElementById('dlCatalog').checked = initialConfig.debridLinkCatalogEnabled !== false;
+      document.getElementById('tbCatalog').checked = initialConfig.torboxCatalogEnabled !== false;
+      document.getElementById('puCatalog').checked = initialConfig.putioCatalogEnabled !== false;
     }
 
     function buildConfiguration() {
@@ -1288,6 +1308,13 @@ export function landingTemplate(manifest, initialConfig = {}) {
         var val = document.getElementById(id).value.trim();
         if (val) parts.push(id + '=' + val);
       });
+
+      // Catalog enable flags (only include if disabled, since default is true)
+      if (!document.getElementById('rdCatalog').checked) parts.push('rdcatalog=0');
+      if (!document.getElementById('pmCatalog').checked) parts.push('pmcatalog=0');
+      if (!document.getElementById('dlCatalog').checked) parts.push('dlcatalog=0');
+      if (!document.getElementById('tbCatalog').checked) parts.push('tbcatalog=0');
+      if (!document.getElementById('puCatalog').checked) parts.push('pucatalog=0');
 
       return parts.join('|');
     }

@@ -138,6 +138,22 @@ export function parseConfiguration(configString) {
       case 'pu':
         config.putioApiKey = value;
         break;
+      // Catalog enable flags
+      case 'rdcatalog':
+        config.realDebridCatalogEnabled = parseBoolean(value, true);
+        break;
+      case 'pmcatalog':
+        config.premiumizeCatalogEnabled = parseBoolean(value, true);
+        break;
+      case 'dlcatalog':
+        config.debridLinkCatalogEnabled = parseBoolean(value, true);
+        break;
+      case 'tbcatalog':
+        config.torboxCatalogEnabled = parseBoolean(value, true);
+        break;
+      case 'pucatalog':
+        config.putioCatalogEnabled = parseBoolean(value, true);
+        break;
       case 'tmdb':
         config.tmdbApiKey = value;
         break;
@@ -194,14 +210,20 @@ export function getDefaultConfiguration() {
     torznabUrl:         null,
     torznabApiKey:      null,
     // Debrid keys (all null by default)
-    realDebridApiKey:   null,
-    premiumizeApiKey:   null,
-    allDebridApiKey:    null,
-    debridLinkApiKey:   null,
-    easyDebridApiKey:   null,
-    offcloudApiKey:     null,
-    torboxApiKey:       null,
-    putioApiKey:        null,
+    realDebridApiKey:      null,
+    premiumizeApiKey:      null,
+    allDebridApiKey:       null,
+    debridLinkApiKey:      null,
+    easyDebridApiKey:      null,
+    offcloudApiKey:        null,
+    torboxApiKey:          null,
+    putioApiKey:           null,
+    // Catalog enable flags (true = show catalog if API key is set)
+    realDebridCatalogEnabled:  true,
+    premiumizeCatalogEnabled:  true,
+    debridLinkCatalogEnabled:  true,
+    torboxCatalogEnabled:      true,
+    putioCatalogEnabled:       true,
   };
 }
 
