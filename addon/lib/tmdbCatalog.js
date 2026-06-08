@@ -215,8 +215,10 @@ function toStremioMeta(item, type, rpdbApiKey) {
   };
 
   // RPDB poster with rating badge (priority)
+  // RPDB uses 'tv' for series, 'movie' for movies
+  const rpdbType = type === 'series' ? 'tv' : 'movie';
   if (rpdbApiKey && imdbId) {
-    meta.poster = `https://api.ratingposterdb.com/${rpdbApiKey}/${type}/poster-default/${imdbId}.jpg`;
+    meta.poster = `https://api.ratingposterdb.com/${rpdbApiKey}/${rpdbType}/poster-default/${imdbId}.jpg`;
   } else if (item.poster_path) {
     // Fallback to TMDB poster
     meta.poster = `${POSTER_BASE}${item.poster_path}`;
