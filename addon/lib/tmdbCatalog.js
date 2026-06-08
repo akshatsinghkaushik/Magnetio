@@ -17,16 +17,19 @@ const REQUEST_TIMEOUT = 8000;
 /**
  * Streaming services with their TMDB watch provider IDs.
  * https://api.themoviedb.org/3/watch/providers
+ *
+ * multiCountry: true = user can select country (Netflix, Prime, Disney+, Apple TV+)
+ *               false = US only (Hulu, Max, Peacock, Paramount+)
  */
 export const StreamingServices = {
-  netflix:   { id: 8,   name: 'Netflix',   defaultCountry: 'us' },
-  prime:     { id: 9,   name: 'Prime Video', defaultCountry: 'us' },
-  disney:    { id: 337, name: 'Disney+',   defaultCountry: 'us' },
-  hulu:      { id: 15,  name: 'Hulu',      defaultCountry: 'us' },
-  max:       { id: 384, name: 'Max',       defaultCountry: 'us' },
-  apple:     { id: 2,   name: 'Apple TV+', defaultCountry: 'us' },
-  peacock:   { id: 386, name: 'Peacock',   defaultCountry: 'us' },
-  paramount: { id: 531, name: 'Paramount+', defaultCountry: 'us' },
+  netflix:   { id: 8,   name: 'Netflix',   multiCountry: true },
+  prime:     { id: 9,   name: 'Prime Video', multiCountry: true },
+  disney:    { id: 337, name: 'Disney+',   multiCountry: true },
+  hulu:      { id: 15,  name: 'Hulu',      multiCountry: false },
+  max:       { id: 384, name: 'Max',       multiCountry: false },
+  apple:     { id: 2,   name: 'Apple TV+', multiCountry: true },
+  peacock:   { id: 386, name: 'Peacock',   multiCountry: false },
+  paramount: { id: 531, name: 'Paramount+', multiCountry: false },
 };
 
 /**
@@ -54,26 +57,27 @@ export function getStreamingCatalogs(config) {
 
   const catalogs = [];
   const services = config.streamingServices || [];
-  const countries = config.streamingCountries || {};
+  const country = config.streamingCountry || 'us';
 
   for (const serviceId of services) {
     const service = StreamingServices[serviceId];
     if (!service) continue;
 
-    const country = countries[serviceId] || service.defaultCountry;
+    // Services that are US-only ignore the country selection
+    const serviceCountry = service.multiCountry ? country : 'us';
 
     // Movie catalog
     catalogs.push({
-      id: `tmdb_${serviceId}_movie_${country}`,
+      id: `tmdb_${serviceId}_movie_${serviceCountry}`,
       type: 'movie',
-      name: `${service.name} Movies (${country.toUpperCase()})`,
+      name: `${service.name} Movies (${serviceCountry.toUpperCase()})`,
     });
 
     // TV catalog
     catalogs.push({
-      id: `tmdb_${serviceId}_series_${country}`,
+      id: `tmdb_${serviceId}_series_${serviceCountry}`,
       type: 'series',
-      name: `${service.name} TV (${country.toUpperCase()})`,
+      name: `${service.name} TV (${serviceCountry.toUpperCase()})`,
     });
   }
 

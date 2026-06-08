@@ -160,38 +160,8 @@ export function parseConfiguration(configString) {
       case 'streamingservices':
         config.streamingServices = value.split(',').filter(Boolean);
         break;
-      // Country per streaming service
-      case 'country_netflix':
-        config.streamingCountries = config.streamingCountries || {};
-        config.streamingCountries.netflix = value;
-        break;
-      case 'country_prime':
-        config.streamingCountries = config.streamingCountries || {};
-        config.streamingCountries.prime = value;
-        break;
-      case 'country_disney':
-        config.streamingCountries = config.streamingCountries || {};
-        config.streamingCountries.disney = value;
-        break;
-      case 'country_hulu':
-        config.streamingCountries = config.streamingCountries || {};
-        config.streamingCountries.hulu = value;
-        break;
-      case 'country_max':
-        config.streamingCountries = config.streamingCountries || {};
-        config.streamingCountries.max = value;
-        break;
-      case 'country_apple':
-        config.streamingCountries = config.streamingCountries || {};
-        config.streamingCountries.apple = value;
-        break;
-      case 'country_peacock':
-        config.streamingCountries = config.streamingCountries || {};
-        config.streamingCountries.peacock = value;
-        break;
-      case 'country_paramount':
-        config.streamingCountries = config.streamingCountries || {};
-        config.streamingCountries.paramount = value;
+      case 'streamingcountry':
+        config.streamingCountry = value;
         break;
       case 'torznaburl':
         try { config.torznabUrl = decodeURIComponent(value); }
@@ -245,7 +215,7 @@ export function getDefaultConfiguration() {
     tmdbCatalogsEnabled:     false,      // Master switch for all TMDB catalogs
     // Streaming service catalogs (What to Watch style)
     streamingServices:       [],         // Selected services: netflix, prime, disney, hulu, max, apple, peacock, paramount
-    streamingCountries:      {},         // Country code per service: { netflix: 'us', prime: 'gb' }
+    streamingCountry:        'us',       // Single country for all services (defaults to US)
     // Torznab (Jackett / Prowlarr)
     torznabUrl:         null,
     torznabApiKey:      null,

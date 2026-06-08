@@ -85,7 +85,7 @@ export function landingTemplate(manifest, initialConfig = {}) {
     tmdbApiKey: initialConfig.tmdbApiKey ?? '',
     tmdbCatalogsEnabled: initialConfig.tmdbCatalogsEnabled ?? false,
     streamingServices: initialConfig.streamingServices ?? [],
-    streamingCountries: initialConfig.streamingCountries ?? {},
+    streamingCountry: initialConfig.streamingCountry ?? 'us',
     torznabUrl: initialConfig.torznabUrl ?? '',
     torznabApiKey: initialConfig.torznabApiKey ?? '',
     realDebridApiKey: initialConfig.realDebridApiKey ?? '',
@@ -1106,7 +1106,7 @@ export function landingTemplate(manifest, initialConfig = {}) {
 
     <div class="config-card">
       <div class="config-card-title">Streaming Catalogs</div>
-      <div class="config-card-desc">Browse movies and TV shows available on your streaming services. Like "What to Watch" – select services and countries to generate catalogs. Requires TMDB API key.</div>
+      <div class="config-card-desc">Browse movies and TV shows available on your streaming services. Like "What to Watch" – select services and a country to generate catalogs. Requires TMDB API key.</div>
       <div class="field-grid">
         <label>
           TMDB API Key
@@ -1114,6 +1114,12 @@ export function landingTemplate(manifest, initialConfig = {}) {
             <input type="password" id="tmdb" autocomplete="off" placeholder="TMDB API key (v3 auth)" />
             <button type="button" class="eye-toggle" data-target="tmdb" title="Toggle visibility">${SVG_EYE}</button>
           </div>
+        </label>
+        <label>
+          Country
+          <select id="streamingCountry">
+            ${STREAMING_COUNTRIES.map(([code, label]) => `<option value="${code}">${label}</option>`).join('')}
+          </select>
         </label>
       </div>
       <div style="margin-top:16px;">
@@ -1127,19 +1133,9 @@ export function landingTemplate(manifest, initialConfig = {}) {
           `).join('')}
         </div>
       </div>
-      <div style="margin-top:16px;">
-        <label style="display:block;margin-bottom:8px;font-size:0.85rem;color:var(--text-primary);">Country per Service (default: US)</label>
-        <div class="field-grid" id="streamingCountries">
-          ${STREAMING_SERVICES.map(([id, name]) => `
-            <label>
-              ${name}
-              <select id="country_${id}">
-                ${STREAMING_COUNTRIES.map(([code, label]) => `<option value="${code}">${label}</option>`).join('')}
-              </select>
-            </label>
-          `).join('')}
-        </div>
-      </div>
+      <p style="font-size:0.75rem;color:var(--text-muted);margin-top:12px;">
+        Note: Hulu, Max, Peacock, and Paramount+ are US-only. Country selection applies to Netflix, Prime Video, Disney+, and Apple TV+.
+      </p>
     </div>
 
     <div class="config-card">
@@ -1312,12 +1308,11 @@ export function landingTemplate(manifest, initialConfig = {}) {
       // Streaming services checkboxes
       setChipGrid('streamingServices', initialConfig.streamingServices || []);
 
-      // Streaming country dropdowns
-      (initialConfig.streamingCountries || {});
-      Object.entries(initialConfig.streamingCountries || {}).forEach(function([serviceId, country]) {
-        var select = document.getElementById('country_' + serviceId);
-        if (select) select.value = country;
-      });
+      // Single country dropdown (use first service's country or default to US)
+      var firstCountry = initialConfig.streamingCountries && initialConfig.streamingServices && initialConfig.streamingServices.length
+        ? (initialConfig.streamingCountries[initialConfig.streamingServices[0]] || 'us')
+        : 'us';
+      document.getElementById('streamingCountry').value = initialConfig.streamingCountry || firstCountry;
 
       document.getElementById('torznabUrl').value = initialConfig.torznabUrl || '';
       document.getElementById('torznabKey').value = initialConfig.torznabApiKey || '';
@@ -1361,13 +1356,11 @@ export function landingTemplate(manifest, initialConfig = {}) {
       var services = selectedValues('streamingServices');
       if (services.length) parts.push('streamingservices=' + services.join(','));
 
-      // Streaming countries per service
-      services.forEach(function(serviceId) {
-        var country = document.getElementById('country_' + serviceId).value;
-        if (country && country !== 'us') {
-          parts.push('country_' + serviceId + '=' + country);
-        }
-      });
+      // Single country for all services
+      var country = document.getElementById('streamingCountry').value;
+      if (country && country !== 'us') {
+        parts.push('streamingcountry=' + country);
+      }
 
       var torznabUrl = document.getElementById('torznabUrl').value.trim();
       var torznabKey = document.getElementById('torznabKey').value.trim();
